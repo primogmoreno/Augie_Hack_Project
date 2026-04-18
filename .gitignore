@@ -1,0 +1,10 @@
+.env
+INSTRUCTIONS.md
+node_modules/
+yarn-error.log
+.yarn/cache
+.yarn/unplugged
+.pnp.*
+client/dist/
+client/.env
+server/.env
