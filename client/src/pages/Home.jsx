@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PlaidLink from '../components/plaid/PlaidLinkButton';
 import Logo from '../components/ui/Logo';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -16,7 +17,7 @@ const BANKS = [
 ];
 
 export default function Home() {
-  const [step, setStep] = useState('intro'); // intro | picking | connecting
+  const [step, setStep] = useState('picking'); // intro | picking | connecting
   const [bank, setBank] = useState(null);
   const navigate = useNavigate();
 
