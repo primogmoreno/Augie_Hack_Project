@@ -1,3 +1,5 @@
+const fmt = n => isNaN(n) ? '-': '$' + Number(n).toLocaleString();
+
 function submit() {
     const monthlyIncome = Number(document.getElementById("monthlyIncome").value) || 0;
     const monthlySavings = Number(document.getElementById("monthlySavings").value) || 0;
@@ -102,8 +104,6 @@ function populateComparison() {
         {key: 'otherExpenses', label: 'Other Expenses'}
     ];
 
-    const fmt = n => isNaN(n) ? '-': '$' + Number(n).toLocaleString();
-
     categories.forEach(cat => {
         const userVal = Number(answers[cat.key]) || 0;
         const csvVal = Number(csvData[cat.key]) || 0;
@@ -165,7 +165,7 @@ function populateBudget(){
     //populate savings (20%)
     const savings = income * 0.2;
     document.getElementById("typicalSavings").innerText = fmt(savings);
-    const yourSavings = ['savings', 'loans'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    const yourSavings = ['monthlySavings', 'loans'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
     document.getElementById("yourSavings").innerText = fmt(yourSavings);
 }
 

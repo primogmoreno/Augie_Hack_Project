@@ -8,10 +8,11 @@
     <script src="simulation.js"></script>
 </head>
 <body>
-    <h1>Your Financial Results</h1>
-
+   
   <!-- INCOME & SAVINGS SUMMARY -->
   <section id="summary-section">
+     <h1>Your Financial Results</h1>
+<br>
     <h2>Income & Savings</h2>
     <table>
       <tr>
@@ -71,15 +72,10 @@
   <!-- BUDGET BREAKDOWN CHART -->
   <section id="chart-section">
     <h2>Budget Breakdown</h2>
-    <canvas id="budgetChart" width="500" height="400"></canvas>
-    <table>
-      <th>
-        <tr>
-          <td></td>
-          <td><strong>A Typical Budget</strong></td>
-          <td><strong>Your Spending</strong></td>
-        </tr>
-      </th>
+    <table id = "budgetTable">
+      <th></th>
+      <th><strong>A Typical Budget</strong></th>
+      <th><strong>Your Spending</strong></th>
       <tr>
         <td>Needs: housing, utilities, groceries, insurance (50%)</td> 
         <td id = "typicalNeeds"></td>
