@@ -33,18 +33,18 @@
   <section id="expenses-section">
     <h2>Monthly Expenses</h2>
     <table>
-      <tr><td>Housing</td><td><span id="housing"></span></td></tr>
-      <tr><td>Loan Payments</td><td><span id="loans"></span></td></tr>
-      <tr><td>Insurance</td><td><span id="insurance"></span></td></tr>
-      <tr><td>Transportation</td><td><span id="transportation"></span></td></tr>
-      <tr><td>Utilities</td><td><span id="utilities"></span></td></tr>
-      <tr><td>Food</td><td><span id="food"></span></td></tr>
-      <tr><td>Entertainment</td><td><span id="entertainment"></span></td></tr>
-      <tr><td>Clothing</td><td><span id="clothing"></span></td></tr>
-      <tr><td>Other Expenses</td><td><span id="otherExpenses"></span></td></tr>
+      <tr><td>Housing</td><td><span id="housingResult"></span></td></tr>
+      <tr><td>Loan Payments</td><td><span id="loansResult"></span></td></tr>
+      <tr><td>Insurance</td><td><span id="insuranceResult"></span></td></tr>
+      <tr><td>Transportation</td><td><span id="transportationResult"></span></td></tr>
+      <tr><td>Utilities</td><td><span id="utilitiesResult"></span></td></tr>
+      <tr><td>Food</td><td><span id="foodResult"></span></td></tr>
+      <tr><td>Entertainment</td><td><span id="entertainmentResult"></span></td></tr>
+      <tr><td>Clothing</td><td><span id="clothingResult"></span></td></tr>
+      <tr><td>Other Expenses</td><td><span id="otherExpensesResult"></span></td></tr>
       <tr>
         <td><strong>Total Expenses</strong></td>
-        <td><strong><span id="totalExpenses"></span></strong></td>
+        <td><strong><span id="totalExpensesResult"></span></strong></td>
       </tr>
     </table>
   </section>
@@ -72,6 +72,30 @@
   <section id="chart-section">
     <h2>Budget Breakdown</h2>
     <canvas id="budgetChart" width="500" height="400"></canvas>
+    <table>
+      <th>
+        <tr>
+          <td></td>
+          <td><strong>A Typical Budget</strong></td>
+          <td><strong>Your Spending</strong></td>
+        </tr>
+      </th>
+      <tr>
+        <td>Needs: housing, utilities, groceries, insurance (50%)</td> 
+        <td id = "typicalNeeds"></td>
+        <td id = "yourNeeds"></td>
+      </tr>
+      <tr>
+        <td>Wants: dining out, entertainment, hobbies (30%)</td>
+        <td id = "typicalWants"></td>
+        <td id = "yourWants"></td>
+      </tr>
+      <tr>
+        <td>Savings and debt repayment (20%)</td>
+        <td id = "typicalSavings"></td>
+        <td id = "yourSavings"></td>
+      </tr>
+    </table>
   </section>
 
   <!-- PERSONALIZED TIPS -->

@@ -38,7 +38,7 @@ function displayResults() {
     //display results
     const fmt = n =>  isNaN(n) ? '-': '$' + Number(n).toLocaleString();
     for(const key in answers) {
-        const element = document.getElementById(key);
+        const element = document.getElementById(key + "Result");
         if(!element) continue;
         element.innerText = fmt(answers[key]);
     }
@@ -50,12 +50,13 @@ function displayResults() {
     // Calculate and display total expenses
     const expenseKeys = ['housing', 'loans', 'insurance', 'transportation', 'utilities', 'food', 'entertainment', 'clothing', 'otherExpenses'];
     const totalExpenses = expenseKeys.reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
-    const totalElement = document.getElementById("totalExpenses");
+    const totalElement = document.getElementById("totalExpensesResult");
     if(totalElement) {
         totalElement.innerText = fmt(totalExpenses);
     }
 }
 
+//TODO: replace with real CSV fetch and parsing once we have the data format nailed down
 function getCSVData(){
     // Sample average data for comparison (in dollars)
     return {
@@ -125,6 +126,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     displayResults();
     populateComparison();
+    populateBudget();
+    suggestions();
 });
 
 function calcTotal() {
@@ -134,4 +137,46 @@ function calcTotal() {
     const total = income - savings - expenses;
     document.getElementById("expense-total").innerText = expenses.toLocaleString();
     document.getElementById("remaining").innerText = total.toLocaleString();
+}
+
+function populateBudget(){
+    const storedAnswers = localStorage.getItem("answers");
+    if(!storedAnswers) return;
+    let answers;
+    try{
+        answers = JSON.parse(storedAnswers);
+    } catch(e) {
+        return;
+    }
+
+    const income = Number(answers.monthlyIncome) || 0;
+
+    //populate needs (50%)
+    const needs = income * 0.5;
+    document.getElementById("typicalNeeds").innerText = fmt(needs);
+
+    const yourNeeds = ['housing', 'insurance', 'transportation', 'utilities', 'food'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    document.getElementById("yourNeeds").innerText = fmt(yourNeeds);
+    //populate wants (30%)
+    const wants = income * 0.3;
+    document.getElementById("typicalWants").innerText = fmt(wants);
+    const yourWants = ['entertainment', 'clothing', 'otherExpenses'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    document.getElementById("yourWants").innerText = fmt(yourWants);
+    //populate savings (20%)
+    const savings = income * 0.2;
+    document.getElementById("typicalSavings").innerText = fmt(savings);
+    const yourSavings = ['savings', 'loans'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    document.getElementById("yourSavings").innerText = fmt(yourSavings);
+}
+
+function suggestions(){
+    const storedAnswers = localStorage.getItem("answers");
+    if(!storedAnswers) return;
+    let answers;
+    try{
+        answers = JSON.parse(storedAnswers);
+    } catch(e) {
+        return;
+    }
+    //TODO: prompt gemini api for suggestions based on user data and CSV data comparison
 }
