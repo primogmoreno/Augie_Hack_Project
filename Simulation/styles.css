@@ -1,0 +1,63 @@
+/* Basic Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  scroll-snap-type: y mandatory; /* The magic: forces vertical snapping */
+  overflow-y: scroll;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  line-height: 1.6;
+}
+
+section {
+  height: 100vh;            /* Each section is exactly 1 screen high */
+  width: 100%;
+  scroll-snap-align: start; /* Snap to the top of the section */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  /* Centers content vertically */
+  align-items: center;      /* Centers content horizontally */
+  padding: 40px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Specific Section Backgrounds for visual flair */
+#home { background-color: #ffffff; }
+#income { background-color: #f8f9fa; }
+#expenses { background-color: #e9ecef; }
+#submit-section { background-color: #dee2e6; }
+
+/* Styling the inputs and table for better visibility */
+table {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+input[type="number"], input[type="text"] {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background-color: #0056b3;
+}

@@ -8,10 +8,12 @@
     <script src="simulation.js"></script>
 </head>
 <body>
+  <section id="welcome-section">
     <h1>Welcome to the Simulation</h1>
     <p>Please respond to the following prompts as best you can.</p>
-
-    <h3>But First...</h3>
+  </section>
+  <section id="income">
+     <h3>But First...</h3>
 <p>Tell us how much you make in a month</p>
 
 <div>
@@ -29,7 +31,9 @@
   <span>$</span><input type="number" id="monthlySavings" min="0" step="10" value="400" style="width:80px"
     oninput="calcTotal()">
 </div>
-
+  </section>
+   
+<section id="expenses">
 <h3>Now, let's talk about your expenses...</h3>
 <p>How much do you spend in a month on the following categories?</p>
 
@@ -56,11 +60,13 @@
     </tr>
   </tfoot>
 </table>
-
+</section>
+<section id = "submit-section">
     <h3>Thank you for your responses!</h3>
     
     <p>Click the button below to see how your responses compare to your financial statements</p>
     <button onclick="submit()">See Results</button>
+</section>
 </body>
 <script src="simulation.js"></script>
 </html>
