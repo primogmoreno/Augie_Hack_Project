@@ -8,6 +8,7 @@ A financial literacy web app built for HackAugie 2026. FinLit connects users to 
 
 - [Node.js](https://nodejs.org/) v18 or higher
 - [Yarn](https://classic.yarnpkg.com/en/docs/install) v1 (classic)
+- [Python](https://www.python.org/downloads/) v3.9 or higher (for the virtual environment)
 
 ---
 
@@ -40,7 +41,23 @@ PORT=5000
 SESSION_SECRET=any-random-string
 ```
 
-**3. Install all dependencies**
+**3. Create and activate a Python virtual environment**
+
+```bash
+python -m venv venv
+```
+
+Activate it:
+
+| Platform | Command |
+|---|---|
+| macOS / Linux | `source venv/bin/activate` |
+| Windows (CMD) | `venv\Scripts\activate.bat` |
+| Windows (PowerShell) | `venv\Scripts\Activate.ps1` |
+
+You should see `(venv)` in your terminal prompt when it's active. To deactivate later, run `deactivate`.
+
+**4. Install all dependencies**
 ```bash
 yarn install
 ```

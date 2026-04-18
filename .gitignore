@@ -8,3 +8,4 @@ yarn-error.log
 client/dist/
 client/.env
 server/.env
+venv
