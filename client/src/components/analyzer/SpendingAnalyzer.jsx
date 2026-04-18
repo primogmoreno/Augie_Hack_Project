@@ -11,7 +11,7 @@ export default function SpendingAnalyzer() {
     setStage('fetching');
     setAnalysis(null);
     try {
-      const { data: txData } = await api.get('/plaid/transactions');
+      const { data: txData } = await api.get('/transactions');
       setStage('analyzing');
       const { data } = await api.post('/gemini/analyze-spending', {
         transactions: txData.transactions ?? [],

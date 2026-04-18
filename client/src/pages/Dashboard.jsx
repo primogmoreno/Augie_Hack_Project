@@ -82,7 +82,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/plaid/accounts')
+    api.get('/accounts')
       .then(({ data }) => {
         const mapped = mapPlaidAccounts(data.accounts, data.liabilities);
         setAccounts(mapped);
@@ -90,9 +90,9 @@ export default function Dashboard() {
       })
       .catch(() => { /* keep fallback */ });
 
-    api.get('/plaid/transactions')
+    api.get('/transactions')
       .then(({ data }) => {
-        if (!data.transactions?.length) return;
+        if (data.pending || !data.transactions?.length) return;
         const iconFor = (cat) => {
           const c = (cat ?? '').toLowerCase();
           if (c.includes('food') || c.includes('restaurant') || c.includes('coffee')) return ICONS.coffee;

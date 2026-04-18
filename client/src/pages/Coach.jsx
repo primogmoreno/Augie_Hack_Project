@@ -6,7 +6,7 @@ import api from '../services/api';
 
 async function fetchAccountSummary() {
   try {
-    const { data } = await api.get('/plaid/accounts');
+    const { data } = await api.get('/accounts');
     const accounts = data.accounts ?? [];
     const liabilities = data.liabilities ?? {};
     const checking = accounts.find(a => a.subtype === 'checking');
