@@ -1,22 +1,47 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import Sidebar from './components/layout/Sidebar';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
+import Coach from './pages/Coach';
+import JargonDecoder from './pages/JargonDecoder';
+
+function Layout() {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
+  if (isHome) {
+    return <Home />;
+  }
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar />
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <Routes>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/coach"     element={<Coach />} />
+          <Route path="/jargon"    element={<JargonDecoder />} />
+          <Route path="/settings"  element={<SettingsPlaceholder />} />
+        </Routes>
+      </div>
+    </div>
+  );
+}
+
+function SettingsPlaceholder() {
+  return (
+    <div style={{ padding: '48px 40px', color: 'var(--fg-3)', fontFamily: 'var(--font-display)', fontSize: 24 }}>
+      Settings coming soon.
+    </div>
+  );
+}
 
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1 container mx-auto px-4 py-8">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+      <Routes>
+        <Route path="/*" element={<Layout />} />
+      </Routes>
     </BrowserRouter>
   );
 }
