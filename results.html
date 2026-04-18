@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results</title>
+</head>
+<body>
+    <h1>Your Financial Results</h1>
+
+  <!-- INCOME & SAVINGS SUMMARY -->
+  <section id="summary-section">
+    <h2>Income & Savings</h2>
+    <table>
+      <tr>
+        <td>Monthly Income</td>
+        <td><span id="monthlyIncome"></span></td>
+      </tr>
+      <tr>
+        <td>Monthly Savings</td>
+        <td><span id="monthlySavings"></span></td>
+      </tr>
+      <tr>
+        <td>Savings Rate</td>
+        <td><span id="savingsRate"></span></td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- EXPENSE BREAKDOWN -->
+  <section id="expenses-section">
+    <h2>Monthly Expenses</h2>
+    <table>
+      <tr><td>Housing</td><td><span id="housing"></span></td></tr>
+      <tr><td>Loan Payments</td><td><span id="loans"></span></td></tr>
+      <tr><td>Insurance</td><td><span id="insurance"></span></td></tr>
+      <tr><td>Transportation</td><td><span id="transportation"></span></td></tr>
+      <tr><td>Utilities</td><td><span id="utilities"></span></td></tr>
+      <tr><td>Food</td><td><span id="food"></span></td></tr>
+      <tr><td>Entertainment</td><td><span id="entertainment"></span></td></tr>
+      <tr><td>Clothing</td><td><span id="clothing"></span></td></tr>
+      <tr><td>Other Expenses</td><td><span id="otherExpenses"></span></td></tr>
+      <tr>
+        <td><strong>Total Expenses</strong></td>
+        <td><strong><span id="totalExpenses"></span></strong></td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- CSV COMPARISON -->
+  <section id="comparison-section">
+    <h2>How You Compare</h2>
+    <p>Based on the data you uploaded, here's how your budget stacks up.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>You</th>
+          <th>Your Data</th>
+          <th>Difference</th>
+        </tr>
+      </thead>
+      <tbody id="comparison-body">
+        <!-- populated by JS -->
+      </tbody>
+    </table>
+  </section>
+
+  <!-- BUDGET BREAKDOWN CHART -->
+  <section id="chart-section">
+    <h2>Budget Breakdown</h2>
+    <canvas id="budgetChart" width="500" height="400"></canvas>
+  </section>
+
+  <!-- PERSONALIZED TIPS -->
+  <section id="tips-section">
+    <h2>Personalized Insights</h2>
+    <ul id="tips-list">
+      <!-- populated by JS -->
+    </ul>
+  </section>
+
+  <script src="simulation.js"></script>
+</body>
+</html>

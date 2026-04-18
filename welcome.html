@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+</head>
+<body>
+    <h1>Welcome to the Simulation</h1>
+    <p>Please respond to the following prompts as best you can.</p>
+
+    <h3>But First...</h3>
+<p>Tell us how much you make in a month</p>
+
+<div>
+  <label>Monthly Income</label><br>
+  <input type="range" id="income-slider" min="0" max="20000" step="100" value="4000"
+    oninput="incomeText.value=this.value; calcTotal()">
+  <span>$</span><input type="text" id="monthlyIncome" value="4000" style="width:80px"
+    oninput="incomeSlider.value=this.value||0; calcTotal()">
+</div>
+
+<p>How much do you put into savings each month?</p>
+
+<div>
+  <label>Monthly Savings</label><br>
+  <span>$</span><input type="number" id="monthlySavings" min="0" step="10" value="400" style="width:80px"
+    oninput="calcTotal()">
+</div>
+
+<h3>Now, let's talk about your expenses...</h3>
+<p>How much do you spend in a month on the following categories?</p>
+
+<table>
+  <tbody id="expense-body">
+    <tr><td>Housing (Rent, Mortgage, Property Tax, etc)</td><td>$<input type="number" id="housing" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Loan Payments (Student Loans, Personal Loans, etc)</td><td>$<input type="number" id="loans" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Insurance (Health, Life, Auto, Home, etc)</td><td>$<input type="number" id="insurance" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Transportation (Car Payment, Gas, Bus Pass, etc)</td><td>$<input type="number" id="transportation" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Utilities (Electricity, Water, Internet, etc)</td><td>$<input type="number" id="utilities" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Food (Groceries, Dining Out)</td><td>$<input type="number" id="food" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Entertainment (Streaming, Movies, Going out, etc)</td><td>$<input type="number" id="entertainment" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Clothing (Shirts, Pants, Shoes, etc)</td><td>$<input type="number" id="clothing" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Other Expenses</td><td>$<input type="number" id="otherExpenses" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+  </tbody>
+  <tfoot>
+    <tr style="border-top: 2px solid #000; font-weight: bold;">
+      <td>Total Monthly Expenses</td>
+      <td>$<span id="expense-total">0</span></td>
+    </tr>
+    <tr>
+      <td>Monthly Income After Savings & Expenses</td>
+      <td id="remaining-label">$<span id="remaining">0</span></td>
+    </tr>
+  </tfoot>
+</table>
+
+    <h3>Thank you for your responses!</h3>
+    
+    <p>Click the button below to see how your responses compare to your financial statements</p>
+    <button onclick="submit()">See Results</button>
+</body>
+<script src="simulation.js"></script>
+</html>
+
