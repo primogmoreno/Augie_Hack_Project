@@ -29,48 +29,74 @@ const PLACEHOLDER_BUDGET = [
 
 function mapPlaidAccounts(accounts, liabilities) {
   const creditCards = liabilities?.credit ?? [];
+  const groups = {}; // keyed by subtype category
 
-  // Count how many of each type exist so we can disambiguate labels
-  const typeCount = {};
   for (const acct of accounts) {
-    const key = acct.type === 'credit' ? 'credit' : acct.subtype ?? acct.type;
-    typeCount[key] = (typeCount[key] ?? 0) + 1;
-  }
-  const typeSeen = {};
+    const bal = acct.balances.current ?? 0;
+    let category = null;
 
-  const result = [];
-  for (const acct of accounts) {
-    const bal  = acct.balances.current ?? 0;
-    const mask = acct.mask ? `••${acct.mask}` : '';
-
-    if (acct.type === 'depository' && acct.subtype === 'checking') {
-      const key = 'checking';
-      typeSeen[key] = (typeSeen[key] ?? 0) + 1;
-      const label = typeCount[key] > 1 ? `Checking ${typeSeen[key]}` : 'Checking';
-      result.push({ name: label, bank: `${acct.name} ${mask}`, bal, delta: 'Connected', tone: 'success' });
-
-    } else if (acct.type === 'depository' && acct.subtype === 'savings') {
-      const key = 'savings';
-      typeSeen[key] = (typeSeen[key] ?? 0) + 1;
-      const label = typeCount[key] > 1 ? `Savings ${typeSeen[key]}` : 'Savings';
-      result.push({ name: label, bank: `${acct.name} ${mask}`, bal, delta: 'Connected', tone: 'primary' });
-
-    } else if (acct.type === 'credit') {
-      const key = 'credit';
-      typeSeen[key] = (typeSeen[key] ?? 0) + 1;
-      const label = typeCount[key] > 1 ? `Credit ${typeSeen[key]}` : 'Credit';
-      const cc          = creditCards.find(c => c.account_id === acct.account_id);
-      const utilization = cc && acct.balances.limit ? Math.round((bal / acct.balances.limit) * 100) : null;
-      result.push({
-        name: label,
-        bank: `${acct.name} ${mask}`,
-        bal:  -bal,
-        delta: utilization !== null ? `${utilization}% utilization` : 'Connected',
-        tone: utilization > 30 ? 'warning' : 'success',
-      });
+    if (acct.type === "depository" && acct.subtype === "checking") {
+      category = "Checking";
+    } else if (acct.type === "depository" && acct.subtype === "savings") {
+      category = "Savings";
+    } else if (acct.type === "credit") {
+      category = "Credit";
+    } else {
+      continue; // skip others for now
     }
+
+    const cc =
+      category === "Credit"
+        ? creditCards.find((c) => c.account_id === acct.account_id)
+        : null;
+    const utilization =
+      cc && acct.balances.limit
+        ? Math.round((bal / acct.balances.limit) * 100)
+        : null;
+
+    const individual = {
+      account_id: acct.account_id,
+      name: acct.name,
+      bank: `${acct.name} ••${acct.mask}`,
+      bal: category === "Credit" ? -bal : bal,
+      limit: acct.balances.limit ?? null,
+      utilization,
+      mask: acct.mask,
+    };
+
+    if (!groups[category]) {
+      groups[category] = {
+        name: category,
+        tone:
+          category === "Credit"
+            ? "warning"
+            : category === "Savings"
+              ? "primary"
+              : "success",
+        totalBal: 0,
+        accounts: [],
+      };
+    }
+
+    groups[category].totalBal += individual.bal;
+    groups[category].accounts.push(individual);
   }
-  return result;
+
+  // build final cards
+  return Object.values(groups).map((g) => ({
+    name: g.name,
+    bank:
+      g.accounts.length === 1
+        ? g.accounts[0].bank
+        : `${g.accounts.length} accounts`,
+    bal: g.totalBal,
+    delta:
+      g.name === "Credit"
+        ? `${g.accounts.length} card${g.accounts.length > 1 ? "s" : ""}`
+        : `${g.accounts.length} account${g.accounts.length > 1 ? "s" : ""}`,
+    tone: g.tone,
+    accounts: g.accounts, // full list for modal
+  }));
 }
 
 function extractCreditInfo(accounts, liabilities) {
@@ -221,7 +247,15 @@ export default function Dashboard() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-      <PlaidLink onReady={openFn => setOpenPlaid(() => openFn)} />
+       <PlaidLink onReady={openFn => setOpenPlaid(() => openFn)}
+                 onConnected={() => {
+          // re-fetch accounts after new bank connected
+          api.get("/accounts").then(({ data }) => {
+            setAccounts(mapPlaidAccounts(data.accounts, data.liabilities));
+            setCreditInfo(extractCreditInfo(data.accounts, data.liabilities));
+            setIsConnected(true);
+          });}}
+      />
 
       <TopBar
         title={greeting}
