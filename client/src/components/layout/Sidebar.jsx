@@ -10,6 +10,7 @@ const NAV = [
   { id: '/coach',       label: 'Coach',            icon: ICONS.coach },
   { id: '/jargon',      label: 'Jargon Decoder',   icon: ICONS.book },
   { id: '/settings',    label: 'Settings',         icon: ICONS.settings },
+  {id: '/logout',     label: 'Logout',        icon: ICONS.back}
 ];
 
 export default function Sidebar() {

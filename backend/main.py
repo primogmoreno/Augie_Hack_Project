@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "your-secret-key-here"  # change this to something random
+app.secret_key = "324wybhw324wiewbsdiaufw7r30eqwe23e"  # change this to something random
 CORS(app, supports_credentials=True)
 
 plaid = PlaidClient()

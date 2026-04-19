@@ -6,13 +6,15 @@ import Coach from './pages/Coach';
 import JargonDecoder from './pages/JargonDecoder';
 import TransactionHistory from './pages/TransactionHistory';
 import Simulation from './pages/Simulation';
+import {Login,Logout} from './pages/Login';
+
 
 function Layout() {
   const location = useLocation();
   const isHome = location.pathname === '/';
 
   if (isHome) {
-    return <Home />;
+    return <Login />;
   }
 
   return (
@@ -26,6 +28,12 @@ function Layout() {
           <Route path="/coach"        element={<Coach />} />
           <Route path="/jargon"       element={<JargonDecoder />} />
           <Route path="/settings"     element={<SettingsPlaceholder />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/coach"     element={<Coach />} />
+          <Route path="/jargon"    element={<JargonDecoder />} />
+          <Route path="/settings"  element={<SettingsPlaceholder />} />
+          <Route path="/logout"    element={<Logout />} />
+          <Route path="*" element={<Home />} />
         </Routes>
       </div>
     </div>

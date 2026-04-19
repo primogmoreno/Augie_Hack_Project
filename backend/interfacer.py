@@ -67,7 +67,7 @@ class PlaidClient:
             end_date=end_date,
         )
         response = self.client.transactions_get(request)
-        print(response)  # For debugging purposes, you can remove this in production
+        #print(response)  # For debugging purposes, you can remove this in production
         return response["transactions"]
     
     def get_accounts(self, access_token: str) -> list:
