@@ -209,55 +209,107 @@ def create_link_token():
     except Exception as e:
         print('create_link_token error', e)
         return jsonify({'error': str(e)}), 500
-
+    
 @app.route("/api/exchange_public_token", methods=["POST"])
 def exchange_public_token():
     public_token = request.json.get("public_token")
     access_token, item_id = plaid.exchange_public_token(public_token)
-    session['access_token'] = access_token  # never returned to frontend
-    return jsonify({"success": True})
+    
+    print("ACCESS TOKEN TYPE:", type(access_token))
+    print("ACCESS TOKEN VALUE:", access_token)
+    
+    tokens = session.get('access_tokens')
+    print("EXISTING SESSION TOKENS:", tokens, type(tokens))
+    
+    if not isinstance(tokens, list):
+        tokens = []
+    tokens.append(access_token)
+    session['access_tokens'] = tokens
+    session.modified = True
+    
+    print("SAVED TOKENS:", session['access_tokens'])
+    return jsonify({"status": "ok"})
 
 @app.route('/api/accounts', methods=['GET'])
 def get_accounts():
-    access_token = session.get('access_token')
-    if not access_token:
+    tokens = session.get('access_tokens', [])
+    if not tokens:
         return jsonify({'error': 'Not connected'}), 401
-    try:
-        accounts = plaid.get_accounts(access_token)
+    
+    all_accounts = []
+    all_liabilities = {'credit': [], 'mortgage': [], 'student': []}
+    debug_log = []  # track each token's result
+    
+    print("tokens:", tokens)
+    
+    for i, token in enumerate(tokens):
+        entry = {'token_index': i, 'token': token, 'accounts': [], 'error': None}
         try:
-            liabilities = plaid.get_liabilities(access_token)
-            liabilities_dict = liabilities.to_dict() if hasattr(liabilities, 'to_dict') else liabilities
-        except Exception:
-            liabilities_dict = {}
-        return jsonify({'accounts': _serialize(accounts), 'liabilities': _serialize(liabilities_dict)})
-    except Exception as e:
-        print('accounts error', e)
-        return jsonify({'error': 'Failed to fetch accounts'}), 500
+            accounts = plaid.get_accounts(token)
+            serialized = _serialize(accounts)
+            all_accounts.extend(serialized)
+            entry['accounts'] = serialized
+
+            try:
+                liabilities = plaid.get_liabilities(token)
+                liabilities_dict = liabilities.to_dict() if hasattr(liabilities, 'to_dict') else liabilities
+                liabilities_dict = _serialize(liabilities_dict)
+                entry['liabilities'] = liabilities_dict
+                for key in all_liabilities:
+                    all_liabilities[key].extend(liabilities_dict.get(key, []))
+            except Exception as e:
+                entry['liabilities_error'] = str(e)
+        except Exception as e:
+            entry['error'] = str(e)
+        
+        debug_log.append(entry)
+
+    with open('debug_accounts.json', 'w') as f:
+        json.dump({
+            'total_accounts': len(all_accounts),
+            'all_accounts': all_accounts,
+            'all_liabilities': all_liabilities,
+            'per_token_log': debug_log,
+        }, f, indent=2)
+
+    return jsonify({'accounts': all_accounts, 'liabilities': all_liabilities})
 
 @app.route('/api/transactions', methods=['GET'])
 def get_transactions():
-    access_token = session.get('access_token')
-    if not access_token:
+    tokens = session.get('access_tokens', [])
+    if not tokens:
         return jsonify({'error': 'Not connected'}), 401
     try:
         days = int(request.args.get('days', 90))
-        transactions = _fetch_transactions_normalized(access_token, days)
-        return jsonify({'transactions': transactions})
+        all_transactions = []
+        for token in tokens:
+            try:
+                all_transactions.extend(_fetch_transactions_normalized(token, days))
+            except Exception as e:
+                if 'PRODUCT_NOT_READY' in str(e):
+                    return jsonify({'transactions': [], 'pending': True}), 200
+        return jsonify({'transactions': all_transactions})
     except Exception as e:
-        if 'PRODUCT_NOT_READY' in str(e):
-            return jsonify({'transactions': [], 'pending': True}), 200
         print('transactions error', e)
         return jsonify({'error': 'Failed to fetch transactions'}), 500
 
+
 @app.route('/api/summary', methods=['GET'])
 def get_summary():
-    access_token = session.get('access_token')
-    if not access_token:
+    tokens = session.get('access_tokens', [])
+    if not tokens:
         return jsonify({'error': 'Not connected'}), 401
     try:
         days = int(request.args.get('days', 90))
-        transactions = _fetch_transactions_normalized(access_token, days)
+        transactions = []
+        for token in tokens:
+            try:
+                transactions.extend(_fetch_transactions_normalized(token, days))
+            except Exception as e:
+                if 'PRODUCT_NOT_READY' in str(e):
+                    return jsonify({'pending': True}), 200
 
+        # rest of your summary logic is unchanged
         debits   = [t for t in transactions if t['type'] == 'debit']
         credits  = [t for t in transactions if t['type'] == 'credit']
         savings  = [t for t in debits if t['category'] == 'Savings & Investing']
@@ -297,8 +349,6 @@ def get_summary():
             'category_totals':       category_totals,
         })
     except Exception as e:
-        if 'PRODUCT_NOT_READY' in str(e):
-            return jsonify({'pending': True}), 200
         print('summary error', e)
         return jsonify({'error': 'Failed to fetch summary'}), 500
 
@@ -325,12 +375,14 @@ def rates():
     except Exception as e:
         print('rates error', e)
         return jsonify({'error': 'Failed to fetch rates'}), 500
+
+
 def _require_gemini():
     if not gemini_client:
         return jsonify({'error': 'GEMINI_API_KEY not configured'}), 503
     return None
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3-flash-preview"
 
 @app.route('/api/gemini/analyze-spending', methods=['POST'])
 def analyze_spending():
@@ -380,16 +432,28 @@ def gemini_chat():
     if err: return err
     messages = request.json.get('messages', [])
     account_summary = request.json.get('accountSummary')
-
+    #print('gemini chat request, account_summary:', account_summary)
     system_parts = ["You are a friendly, knowledgeable financial literacy coach. Be concise, warm, and practical. Avoid jargon."]
+
     if account_summary:
-        system_parts.append(
-            f"User's account context: checking ${account_summary.get('checkingBal','N/A')}, "
-            f"savings ${account_summary.get('savingsBal','N/A')}, "
-            f"credit balance ${account_summary.get('creditBal','N/A')}, "
-            f"credit limit ${account_summary.get('creditLimit','N/A')}, "
-            f"APR {account_summary.get('creditApr','N/A')}%."
-        )
+        print('account_summary for gemini chat:', account_summary)
+        system_parts.append(f"""
+    User's Financial Snapshot:
+
+    Spending & Income (last {account_summary.get('period_days', 'N/A')} days):
+    - Total spent: ${account_summary.get('total_spent', 'N/A')}
+    - Total income: ${account_summary.get('total_income', 'N/A')}
+    - Savings rate: {account_summary.get('savings_rate', 'N/A')}% (national avg: {account_summary.get('national_savings_rate', 'N/A')}%)
+    - Amount saved/invested: ${account_summary.get('savings_invested', 'N/A')}
+    - Recurring expenses: ${account_summary.get('recurring_total', 'N/A')} across {account_summary.get('recurring_count', 'N/A')} subscriptions
+    - Transactions analyzed: {account_summary.get('transaction_count', 'N/A')}
+
+    Top Spending Categories:
+    {chr(10).join(
+        f"- {cat['category']}: ${cat['total']}"
+        for cat in account_summary.get('category_totals', [])[:5]
+    )}
+    """)
     system_prompt = ' '.join(system_parts)
 
     history = []

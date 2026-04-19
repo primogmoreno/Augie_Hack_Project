@@ -24,7 +24,7 @@ function Layout() {
       <Sidebar />
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <Routes>
-          <Route path="/dashboard"    element={<Dashboard />} />
+          
           <Route path="/transactions" element={<TransactionHistory />} />
           <Route path="/simulate"     element={<Simulation />} />
           <Route path="/analyze"      element={<Analyze />} />
@@ -33,7 +33,9 @@ function Layout() {
           <Route path="/dictionary"   element={<Dictionary />} />
           <Route path="/settings"     element={<SettingsPlaceholder />} />
           <Route path="/logout"       element={<Logout />} />
-          <Route path="*"             element={<Home />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Home />} />
         </Routes>
       </div>
     </div>
