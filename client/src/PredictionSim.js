@@ -1,4 +1,4 @@
-const advanceTime = 3;
+const advanceTime = 2;
 userState = {
     age: 0,
     cash: 0,
@@ -123,7 +123,6 @@ function simulateYear() {
     }
     if(userState.cash < -10000){
         alert("Simulation complete! You went bankrupt at age " + userState.age + ".");
-        window.location.href = "PredictionSim.html";
         return;
     }
     // Update user state based on economy
@@ -139,6 +138,7 @@ function simulateYear() {
     const selectedEvents = document.querySelectorAll('input[name="lifeEvent"]:checked');
     selectedEvents.forEach(checkbox => {
         enactEvent({event: checkbox.value});
+        checkbox.checked = false;
     });
 
     // Random life events
@@ -226,7 +226,7 @@ function enactEvent(event) {
             userState.cash *= 0.5;
             userState.relationshipStatus = "divorced";
             break;
-        case 'marriage':
+        case 'married':
             userState.cash += 20000;
             userState.relationshipStatus = "married";
             break;
