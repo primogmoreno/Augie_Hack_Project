@@ -73,21 +73,60 @@ function displayResults() {
 
 //TODO: replace with real CSV fetch and parsing once we have the data format nailed down
 function getCSVData(){
-    // Sample average data for comparison (in dollars)
-    return {
-        monthlyIncome: 5000,
-        monthlySavings: 500,
-        housing: 1200,
-        loans: 300,
-        insurance: 200,
-        transportation: 400,
-        utilities: 150,
-        food: 300,
-        entertainment: 150,
-        clothing: 100,
-        otherExpenses: 200
-    };
+    //Note: /transactions endpoint returns last 90 days, so we divide by 3 to get the average for 30 days.
+    //fetch and total transactions
+    try{
+        const response = await fetch('/api/plaid/transactions');
+        if(!response.ok) throw new Error('Failed to fetch transactions');
+        const data = await response.json();
+        const totals = {
+            housing: 0,
+            loans: 0,
+            insurance: 0,
+            transportation: 0,
+            utilities: 0,
+            food: 0,
+            entertainment: 0,
+            clothing: 0,
+            otherExpenses: 0
+        };
+        const categoryMapping = {
+            "Rent": 'housing',
+            "Mortgage": 'housing',
+            "Home": 'housing',
+            "Loan": 'loans',
+            "Credit Card": 'loans',
+            "Insurance": 'insurance',
+            "Auto": 'transportation',
+            "Public Transportation": 'transportation',
+            "Utilities": 'utilities',
+            "Food and Drink": 'food',
+            "Restaurants": 'food',
+            "Entertainment": 'entertainment',
+            "Clothing": 'clothing',
+            "Other": 'otherExpenses'
+            // Default to 'otherExpenses' if no match
+        };
+        const categorizeTransaction = (categories) => {
+            for(let cat of categories) {
+                if(categoryMapping[cat]) return categoryMapping[cat];
+            }
+            return 'otherExpenses';}
+        
+        data.transactions.forEach(tx => {
+            const amount = tx.amount / 3; // Average for 30 days
+            const categories = tx.category || [];
+            const categoryKey = categorizeTransaction(categories);
+            totals[categoryKey] += amount;
+        });
+        return totals;
+    }
+    catch(e) {        
+        console.error('Error fetching transactions:', e);
+        return {};
+    }
 }
+
 
 function populateComparison() {
     const storedAnswers = localStorage.getItem("answers");
