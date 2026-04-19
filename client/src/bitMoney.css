@@ -72,7 +72,6 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --dur-fast: 120ms;
   --dur-base: 200ms;
-  --dur-slow: 300ms;
 }
 
 html { font-size: 16px; }
@@ -233,11 +232,25 @@ button:active {
 
 /* Random Event Modal */
 #randomEvent {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(15, 13, 9, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+#randomEvent > div {
+  background: var(--bg-surface);
   padding: 2rem;
   border-radius: 0.5rem;
   max-width: 30rem;
   box-shadow: var(--shadow-lg);
+  text-align: center;
 }
 
 #randomEvent h3 {
