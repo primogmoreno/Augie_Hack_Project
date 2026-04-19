@@ -254,14 +254,19 @@ export default function Dashboard() {
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3em', color: 'var(--accent)', marginBottom: 14 }}>
                   Total Portfolio Value
                 </div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 72, fontWeight: 300, letterSpacing: '-0.04em', color: 'var(--primary)', lineHeight: 1, margin: 0 }}>
-                  ${Math.floor(Math.abs(totalValue)).toLocaleString()}
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 72, fontWeight: 300, letterSpacing: '-0.04em', color: totalValue < 0 ? 'var(--danger, #ef4444)' : 'var(--primary)', lineHeight: 1, margin: 0 }}>
+                  {totalValue < 0 ? '−' : ''}${Math.floor(Math.abs(totalValue)).toLocaleString()}
                   <span style={{ fontSize: 40, opacity: 0.4 }}>
                     .{(Math.abs(totalValue) % 1).toFixed(2).slice(2)}
                   </span>
                 </h3>
+                {totalValue < 0 && (
+                  <div style={{ fontSize: 12, color: 'var(--danger, #ef4444)', marginTop: 6, fontWeight: 500 }}>
+                    Net liabilities exceed assets — credit balances are included
+                  </div>
+                )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', paddingBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(accounts.length, 3)}, 1fr)`, paddingBottom: 8 }}>
                 {accounts.length > 0 ? accounts.map((a, i) => (
                   <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16 }}>
                     <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 4 }}>{a.name}</div>
@@ -464,11 +469,13 @@ export default function Dashboard() {
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--accent)', fontWeight: 700, marginBottom: 8 }}>
                 Projected Net Worth (1 yr)
               </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, color: 'var(--primary)', lineHeight: 1 }}>
-                {totalValue > 0 ? `$${Math.round(totalValue * 1.142).toLocaleString()}` : '—'}
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, color: totalValue < 0 ? 'var(--danger, #ef4444)' : 'var(--primary)', lineHeight: 1 }}>
+                {totalValue !== 0
+                  ? `${totalValue < 0 ? '−' : ''}$${Math.abs(Math.round(totalValue * 1.142)).toLocaleString()}`
+                  : '—'}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>
-                ↑ +14.2% from current
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 12, fontWeight: 700, color: totalValue < 0 ? 'var(--danger, #ef4444)' : 'var(--success)' }}>
+                {totalValue < 0 ? '↓ Based on current debt trajectory' : '↑ +14.2% from current'}
               </div>
             </div>
           </section>
