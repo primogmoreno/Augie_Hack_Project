@@ -1,5 +1,3 @@
-import { initNCUAData, predictFuture } from './gemini.js';
-
 const advanceTime = 2;
 let ncuaData = null;
 userState = {
@@ -49,7 +47,7 @@ randomLifeEvents = {
         name: "Death in the Family",
         description: "A family member passed away, causing emotional and financial strain."
      },
-    weatherDisaster: { weight: 0.03, impact: -0.4,
+    weatherDisaster: { weight: 0.08, impact: -0.4,
         name: "Weather Disaster",
         description: "A natural disaster damaged your property, leading to unexpected expenses."
      },
@@ -89,46 +87,104 @@ randomLifeEvents = {
      },
      noMajorEvent: { weight: 0.6, impact: 0 }
 }
-addEventListener('DOMContentLoaded', () => {
-    initAppData();
-    userState = JSON.parse(sessionStorage.getItem('userState')) || userState;
-    economyState = JSON.parse(sessionStorage.getItem('economyState')) || economyState;
+function attachPredictionSimListeners() {
+    console.log('attachPredictionSimListeners', document.readyState);
+    try {
+        const restartButton = document.getElementById('restartButton');
+        if (restartButton) {
+            restartButton.addEventListener('click', () => {
+                window.location.href = "PredictionSim.html";
+            });
+        }
 
-    if(window.location.pathname.includes("bitMoney.html")) {
-        displayCurrentData();
-        document.getElementById('restartButton').addEventListener('click', () => {
-         window.location.href = "PredictionSim.html";
-         });
-         document.getElementById('continueButton').addEventListener('click', simulateYear);
-         document.getElementById('closeEventButton').addEventListener('click', closeEvent);
+        const continueButton = document.getElementById('continueButton');
+        if (continueButton) {
+            continueButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                simulateYear();
+            });
+        }
+
+        const closeEventButton = document.getElementById('closeEventButton');
+        if (closeEventButton) {
+            closeEventButton.addEventListener('click', closeEvent);
+        }
+
+        const startButton = document.getElementById('startButton');
+        if (startButton) {
+            startButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                console.log('startButton clicked');
+                startSimulation();
+            });
+        }
+
+        if (document.getElementById('currentFinances') || document.getElementById('currentEconomy')) {
+            displayCurrentData();
+        }
+    } catch (error) {
+        console.error('attachPredictionSimListeners error:', error);
     }
-    if(window.location.pathname.includes("PredictionSim.html")) {
-        document.getElementById('startButton').addEventListener('click', startSimulation);
-    }
-});
-function startSimulation(){
-    //initialize user state and economy state
-    userState.age = Number(document.getElementById('ageInput').value);
-    userState.cash = Number(document.getElementById('cashInput').value);
-    userState.income = Number(document.getElementById('income').value);
-    userState.expenses = Number(document.getElementById('expensesInput').value);
-    userState.investments = Number(document.getElementById('investmentsInput').value);
-    userState.relationshipStatus = "single";
-    userState.hasJob = true;
-    userState.kids = 0;
-    userState.hasBusiness = false;
-
-    economyState.inflationRate = 0.02;
-    economyState.marketReturn = 0.05;
-    economyState.recession = false;
-
-
-    sessionStorage.setItem('userState', JSON.stringify(userState));
-    sessionStorage.setItem('economyState', JSON.stringify(economyState));
-    window.location.href = "bitMoney.html";
 }
 
-function simulateYear() {
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('PredictionSim DOMContentLoaded');
+    try {
+        await initAppData();
+    } catch (error) {
+        console.warn('NCUA init failed, continuing without data:', error);
+    }
+
+    userState = JSON.parse(sessionStorage.getItem('userState')) || userState;
+    economyState = JSON.parse(sessionStorage.getItem('economyState')) || economyState;
+    attachPredictionSimListeners();
+});
+
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    attachPredictionSimListeners();
+}
+function startSimulation(){
+    try {
+        const ageInput = document.getElementById('ageInput');
+        const cashInput = document.getElementById('cashInput');
+        const incomeInput = document.getElementById('income');
+        const expensesInput = document.getElementById('expensesInput');
+        const investmentsInput = document.getElementById('investmentsInput');
+
+        if (!ageInput || !cashInput || !incomeInput || !expensesInput || !investmentsInput) {
+            console.error('Start simulation failed: one or more input fields are missing.');
+            return;
+        }
+
+        // initialize user state and economy state
+        userState.age = Number(ageInput.value);
+        userState.cash = Number(cashInput.value);
+        userState.income = Number(incomeInput.value);
+        userState.expenses = Number(expensesInput.value);
+        userState.investments = Number(investmentsInput.value);
+        userState.relationshipStatus = "single";
+        userState.hasJob = true;
+        userState.kids = 0;
+        userState.hasBusiness = false;
+
+        economyState.inflationRate = 0.02;
+        economyState.marketReturn = 0.05;
+        economyState.recession = false;
+
+        sessionStorage.setItem('userState', JSON.stringify(userState));
+        sessionStorage.setItem('economyState', JSON.stringify(economyState));
+
+        const nextPage = new URL('bitMoney.html', window.location.href).href;
+        console.log('Starting simulation, navigating to', nextPage);
+        window.location.href = nextPage;
+    } catch (error) {
+        console.error('startSimulation error:', error);
+    }
+}
+
+window.startSimulation = startSimulation;
+
+async function simulateYear() {
     if(userState.age >= 80) {
         alert("Simulation complete! You lived to be " + userState.age + " years old.");
         return;
@@ -156,18 +212,15 @@ function simulateYear() {
     // Random life events
     const randomEvent = getRandomLifeEvent();
     if(randomEvent && randomEvent.event !== 'noMajorEvent'){
-    enactEvent(randomEvent);
-    displayRandomEvent(randomEvent);
+        enactEvent(randomEvent);
+        displayRandomEvent(randomEvent);
     }
     
-   
-
     // Save state    
     sessionStorage.setItem('userState', JSON.stringify(userState));
     
+    await forecastEconomy();
     displayCurrentData();
-    await predictFuture();
-
 }
 
 function getRandomLifeEvent() {
@@ -298,13 +351,9 @@ function displayCurrentData(){
 }
 
 
-function predictFuture() {
+async function forecastEconomy() {
     const wasInRecession = economyState.recession;
-    if(!ncuaData){
-        console.error("No NCUA data available for prediction.");
-        return null;
-    }
-    const results = await predictFuture(advanceTime);
+    const results = await generateFuturePrediction(advanceTime);
     if(results){
         economyState.inflationRate = results.inflationRate;
         economyState.marketReturn = results.marketRate;
@@ -316,6 +365,82 @@ function predictFuture() {
     }
     sessionStorage.setItem('economyState', JSON.stringify(economyState));
 }
+
+async function generateFuturePrediction(years) {
+    const validRates = Array.isArray(ncuaData)
+        ? ncuaData.filter(item => typeof item.cu_rate === 'number' && !isNaN(item.cu_rate))
+        : [];
+    const avgCuRate = validRates.length
+        ? validRates.reduce((sum, item) => sum + item.cu_rate, 0) / validRates.length
+        : 0.05;
+
+    const previousInflation = economyState.inflationRate || 0.02;
+    const previousMarket = economyState.marketReturn || 0.05;
+
+    const targetInflation = 0.02 + (avgCuRate - 0.05) * 0.15 + years * 0.005;
+    const targetMarket = 0.05 + (avgCuRate - 0.05) * 0.2 + years * 0.005;
+
+    const jitter = () => (Math.random() - 0.5) * 0.02;
+
+    const inflationRate = Math.max(
+        0.01,
+        Math.min(
+            0.10,
+            previousInflation + (targetInflation - previousInflation) * 0.4 + jitter()
+        )
+    );
+
+    const marketRate = Math.max(
+        0.01,
+        Math.min(
+            0.12,
+            previousMarket + (targetMarket - previousMarket) * 0.4 + jitter()
+        )
+    );
+
+    const recessionProbability = Math.max(
+        0,
+        Math.min(
+            1,
+            0.12 + (0.05 - avgCuRate) * 1.5 + years * 0.01 + (Math.random() - 0.5) * 0.05
+        )
+    );
+
+    return {
+        inflationRate,
+        marketRate,
+        recessionProbability
+    };
+}
+
+async function initNCUAData() {
+    const targetUrl = "https://ncua.gov/analysis/cuso-economic-data/credit-union-bank-rates";
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+    try {
+        const response = await fetch(proxyUrl);
+        const json = await response.json();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(json.contents, 'text/html');
+        const rows = Array.from(doc.querySelectorAll('table tr'));
+
+        const parsedData = rows.map(row => {
+            const cells = row.querySelectorAll('td');
+            return {
+                product: cells[0]?.innerText.trim(),
+                cu_rate: parseFloat(cells[1]?.innerText),
+                bank_rate: parseFloat(cells[2]?.innerText)
+            };
+        }).filter(item => item.product && !isNaN(item.cu_rate));
+
+        return parsedData;
+    } catch (err) {
+        console.error("Failed to fetch NCUA data:", err);
+        return null;
+    }
+}
+
 async function initAppData() {
     // Use the live fetch logic from before, but save it to the buffer
     ncuaData = await initNCUAData(); 
