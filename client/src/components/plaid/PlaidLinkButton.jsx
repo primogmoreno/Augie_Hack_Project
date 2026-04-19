@@ -35,6 +35,15 @@ export default function PlaidLink({ onReady }) {
 
   const { open, ready } = usePlaidLink({ token: linkToken ?? '', onSuccess });
 
+  const isReady = ready && !!linkToken;
+
+  // Must be before any conditional return to satisfy Rules of Hooks
+  useEffect(() => {
+    if (ready && linkToken && onReady) {
+      onReady(open);
+    }
+  }, [ready, linkToken, open, onReady]);
+
   if (fetchError) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -50,13 +59,6 @@ export default function PlaidLink({ onReady }) {
       </div>
     );
   }
-
-  const isReady = ready && !!linkToken;
-   useEffect(() => {
-    if (ready && linkToken && onReady) {
-      onReady(open);
-    }
-  }, [ready, linkToken]);
 
   // if onReady is passed, render nothing (parent controls button)
   // otherwise render the button as before

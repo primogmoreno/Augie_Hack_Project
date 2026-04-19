@@ -458,5 +458,231 @@ Return ONLY a JSON array of tip strings, e.g. ["Tip one.", "Tip two."]"""
         print('gemini simulate-tips error', e)
         return jsonify({'error': 'Gemini request failed'}), 500
 
+@app.route('/api/health/tree-data', methods=['GET'])
+def tree_data():
+    access_token = session.get('access_token')
+    if not access_token:
+        return jsonify({'error': 'Not connected'}), 401
+    try:
+        # ── Fetch all Plaid data ────────────────────────────────────────
+        transactions_90 = _fetch_transactions_normalized(access_token, 90)
+        accounts_resp   = plaid.get_accounts(access_token)
+        accounts_list   = _serialize(accounts_resp)
+
+        try:
+            liabilities_resp = plaid.get_liabilities(access_token)
+            liabilities      = _serialize(liabilities_resp.to_dict() if hasattr(liabilities_resp, 'to_dict') else liabilities_resp)
+        except Exception:
+            liabilities = {}
+
+        # ── Accounts by subtype ─────────────────────────────────────────
+        def acc_balance(acc):
+            bal = acc.get('balances', {}) or {}
+            return bal.get('current') or bal.get('available') or 0
+
+        savings_accs   = [a for a in accounts_list if a.get('subtype') in ('savings', 'money market', 'cd')]
+        credit_accs    = [a for a in accounts_list if a.get('type') == 'credit']
+        invest_accs    = [a for a in accounts_list if a.get('type') in ('investment', 'brokerage')]
+
+        savings_balance      = sum(acc_balance(a) for a in savings_accs)
+        total_credit_balance = sum(acc_balance(a) for a in credit_accs)
+        total_credit_limit   = sum((a.get('balances', {}) or {}).get('limit') or 0 for a in credit_accs)
+
+        # ── Income / spending ───────────────────────────────────────────
+        debits   = [t for t in transactions_90 if t['type'] == 'debit' and t['category'] != 'Savings & Investing']
+        credits  = [t for t in transactions_90 if t['type'] == 'credit']
+        savings_txs = [t for t in transactions_90 if t['category'] == 'Savings & Investing']
+
+        total_income     = abs(sum(t['amount'] for t in credits))
+        total_spending   = sum(t['amount'] for t in debits)
+        savings_invested = sum(t['amount'] for t in savings_txs)
+
+        monthly_income   = total_income / 3.0 if total_income > 0 else 1
+        monthly_expenses = total_spending / 3.0
+
+        # ── Savings pillar ──────────────────────────────────────────────
+        emergency_fund_months = savings_balance / monthly_expenses if monthly_expenses > 0 else 0
+        monthly_savings_rate  = (savings_invested / 3.0 / monthly_income * 100) if monthly_income > 0 else 0
+        # Consistent deposits: savings tx in at least 2 of the 3 months
+        months_with_savings = set()
+        for t in savings_txs:
+            try:
+                months_with_savings.add(datetime.strptime(t['date'], '%Y-%m-%d').month)
+            except Exception:
+                pass
+        has_consistent_deposits = len(months_with_savings) >= 2
+
+        savings_score = 0
+        savings_score += min(50, emergency_fund_months * (50 / 6))
+        savings_score += 30 if has_consistent_deposits else 0
+        savings_score += min(20, monthly_savings_rate)
+        savings_score = round(min(100, savings_score))
+
+        # ── Debt pillar ─────────────────────────────────────────────────
+        credit_liabilities = liabilities.get('credit', []) or []
+        avg_apr = 0
+        if credit_liabilities:
+            aprs = []
+            for cl in credit_liabilities:
+                for apr_item in (cl.get('aprs') or []):
+                    v = apr_item.get('apr_percentage')
+                    if v:
+                        aprs.append(v)
+            avg_apr = sum(aprs) / len(aprs) if aprs else 0
+
+        credit_utilization = (total_credit_balance / total_credit_limit) if total_credit_limit > 0 else 0
+        dti = (total_credit_balance / (monthly_income * 12)) if monthly_income > 0 else 0
+
+        debt_score = 100
+        debt_score -= min(40, dti * 125)
+        debt_score -= min(25, credit_utilization * 62.5)
+        if avg_apr > 20:
+            debt_score -= min(15, (avg_apr - 20) * 1.5)
+        debt_score = round(max(0, debt_score))
+
+        # ── Spending pillar ─────────────────────────────────────────────
+        by_month = {}
+        for t in debits:
+            try:
+                m = datetime.strptime(t['date'], '%Y-%m-%d').month
+                by_month[m] = by_month.get(m, 0) + t['amount']
+            except Exception:
+                pass
+
+        monthly_totals = list(by_month.values())
+        avg_month = sum(monthly_totals) / len(monthly_totals) if monthly_totals else 0
+        months_over = sum(1 for v in monthly_totals if v > avg_month * 1.15)
+        volatility = 'low'
+        if len(monthly_totals) > 1:
+            import statistics
+            try:
+                cv = statistics.stdev(monthly_totals) / avg_month if avg_month > 0 else 0
+                if cv > 0.25:   volatility = 'high'
+                elif cv > 0.12: volatility = 'moderate'
+            except Exception:
+                pass
+
+        cat_sums = {}
+        for t in debits:
+            cat_sums[t['category']] = cat_sums.get(t['category'], 0) + t['amount']
+        top_cat = max(cat_sums, key=cat_sums.get) if cat_sums else 'Other'
+
+        spending_score = 100
+        spending_score -= min(60, months_over * 20)
+        if volatility == 'high':     spending_score -= 20
+        elif volatility == 'moderate': spending_score -= 10
+        spending_score = round(max(0, spending_score))
+
+        # ── Literacy pillar (stub — no tracking yet) ────────────────────
+        literacy_score = 50
+        literacy_data  = {'score': literacy_score, 'detail': 'Literacy tracking coming soon', 'modulesCompleted': 5, 'modulesTotal': 12, 'lastActivityDays': 7}
+
+        # ── Sapling pillar (investment accounts) ───────────────────────
+        has_invest = len(invest_accs) > 0
+        invest_balance = sum(acc_balance(a) for a in invest_accs)
+        sapling_score = 0
+        if has_invest:
+            sapling_score += 20
+            invest_txs = [t for t in transactions_90 if t['category'] == 'Savings & Investing']
+            inv_months = set()
+            for t in invest_txs:
+                try:
+                    inv_months.add(datetime.strptime(t['date'], '%Y-%m-%d').month)
+                except Exception:
+                    pass
+            contribution_consistency = len(inv_months) / 3.0
+            sapling_score += round(contribution_consistency * 35)
+            monthly_invest = invest_balance / 12.0
+            contrib_rate = min(30, (monthly_invest / monthly_income) * 300) if monthly_income > 0 else 0
+            sapling_score += round(contrib_rate)
+            sapling_score += min(15, len(invest_accs) * 7)
+            sapling_score = min(100, sapling_score)
+
+        # ── Composite score ─────────────────────────────────────────────
+        health_score = round(
+            savings_score  * 0.30 +
+            debt_score     * 0.25 +
+            spending_score * 0.25 +
+            literacy_score * 0.20
+        )
+
+        # ── Stage ───────────────────────────────────────────────────────
+        stages = [
+            {'name': 'Bare Ground',   'min': 0,  'desc': 'Your financial journey has not started yet. Plant the first seed.'},
+            {'name': 'First Seed',    'min': 15, 'desc': 'A seed has been planted. Small habits are beginning to take root.'},
+            {'name': 'Young Sprout',  'min': 25, 'desc': 'Your sprout is fragile but growing. Protect it with consistent habits.'},
+            {'name': 'Steady Sapling','min': 40, 'desc': 'Your roots are forming. Keep nurturing your habits.'},
+            {'name': 'Young Tree',    'min': 55, 'desc': 'Growing strong. Your financial foundation is becoming solid.'},
+            {'name': 'Mature Tree',   'min': 70, 'desc': 'A strong, leafy tree. Your money is working for you.'},
+            {'name': 'Thriving Tree', 'min': 85, 'desc': 'Full canopy, deep roots. Financial confidence at its peak.'},
+            {'name': 'Mighty Oak',    'min': 93, 'desc': 'Financial mastery. Your tree stands tall and endures all seasons.'},
+        ]
+        stage = next((s for s in reversed(stages) if health_score >= s['min']), stages[0])
+
+        # ── Milestones ──────────────────────────────────────────────────
+        unlocked = []
+        if emergency_fund_months > 0:          unlocked.append('first-deposit')
+        if literacy_data['modulesCompleted'] >= 1: unlocked.append('budget-set')
+        if health_score >= 25:                 unlocked.append('debt-aware')
+        if emergency_fund_months >= 1:         unlocked.append('ef-one-month')
+        if has_invest:                          unlocked.append('sapling-planted')
+        if health_score >= 40:                 unlocked.append('rate-reader')
+        if has_consistent_deposits and health_score >= 50: unlocked.append('consistent-3mo')
+        if emergency_fund_months >= 3:         unlocked.append('ef-three-month')
+        if health_score >= 65:                 unlocked.append('debt-down')
+        if health_score >= 70:                 unlocked.append('cu-conversation')
+        if sapling_score >= 50:                unlocked.append('invest-growing')
+        if health_score >= 85:                 unlocked.append('financial-plan')
+        if health_score >= 93:                 unlocked.append('mighty-oak')
+
+        return jsonify({
+            'pillars': {
+                'savings': {
+                    'score': savings_score,
+                    'detail': f"Emergency fund: {emergency_fund_months:.1f} months saved",
+                    'monthlyContributionRate': round(monthly_savings_rate, 1),
+                    'emergencyFundMonths': round(emergency_fund_months, 2),
+                    'hasConsistentDeposits': has_consistent_deposits,
+                },
+                'debt': {
+                    'score': debt_score,
+                    'detail': 'Moderate debt load' if 30 <= debt_score < 70 else ('Low debt' if debt_score >= 70 else 'High debt load'),
+                    'debtToIncomeRatio': round(dti, 3),
+                    'averageAPR': round(avg_apr, 1),
+                    'missedPayments': 0,
+                    'creditUtilization': round(credit_utilization, 3),
+                },
+                'spending': {
+                    'score': spending_score,
+                    'detail': f"Top spend: {top_cat}",
+                    'monthsOverBudget': months_over,
+                    'topOverspendCategory': top_cat,
+                    'spendingVolatility': volatility,
+                },
+                'literacy': literacy_data,
+            },
+            'sapling': {
+                'score': sapling_score,
+                'hasInvestmentAccount': has_invest,
+                'contributionConsistency': round(len(inv_months) / 3.0, 2) if has_invest else 0,
+                'accountTypes': [a.get('subtype', 'investment') for a in invest_accs],
+                'totalInvestedBalance': round(invest_balance, 2),
+                'monthlyContribution': round(invest_balance / 12.0, 2),
+                'lastContributionDays': 0,
+                'detail': f"${invest_balance:.0f} invested" if has_invest else 'No investment account',
+            },
+            'healthScore':       health_score,
+            'stageName':         stage['name'],
+            'stageDescription':  stage['desc'],
+            'unlockedMilestones': unlocked,
+        })
+    except Exception as e:
+        if 'PRODUCT_NOT_READY' in str(e):
+            return jsonify({'pending': True}), 200
+        print('tree-data error', e)
+        import traceback; traceback.print_exc()
+        return jsonify({'error': 'Failed to compute tree data'}), 500
+
+
 if __name__ == "__main__":
     app.run(port=5000)
