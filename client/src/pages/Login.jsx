@@ -46,11 +46,15 @@ function Login() {
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState("");
   useEffect(() => {
-    const isUserLoggedIn = !!sessionStorage.getItem("user");
-    if (isUserLoggedIn && user) {
-      navigate("/home");
+    if (user && isRegistered) {
+      sessionStorage.setItem("user", JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+      }));
+      navigate("/dashboard");
     }
-  }, [user]);
+  }, [user, isRegistered]);
 
   const handleSignIn = async () => {
     try {

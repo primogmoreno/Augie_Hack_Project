@@ -6,6 +6,7 @@ import Coach from './pages/Coach';
 import JargonDecoder from './pages/JargonDecoder';
 import TransactionHistory from './pages/TransactionHistory';
 import Simulation from './pages/Simulation';
+import Analyze from './pages/Analyze';
 import {Login,Logout} from './pages/Login';
 
 
@@ -25,6 +26,7 @@ function Layout() {
           <Route path="/dashboard"    element={<Dashboard />} />
           <Route path="/transactions" element={<TransactionHistory />} />
           <Route path="/simulate"     element={<Simulation />} />
+          <Route path="/analyze"      element={<Analyze />} />
           <Route path="/coach"        element={<Coach />} />
           <Route path="/jargon"       element={<JargonDecoder />} />
           <Route path="/settings"     element={<SettingsPlaceholder />} />
