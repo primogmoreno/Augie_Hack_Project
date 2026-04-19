@@ -1,6 +1,6 @@
 const advanceTime = 2;
 let ncuaData = null;
-userState = {
+let userState = {
     age: 0,
     cash: 0,
     income: 0,
@@ -12,7 +12,7 @@ userState = {
     kids: 0,
     hasBusiness: false
 }
-economyState = {
+let economyState = {
     inflationRate: 0.02,
     marketReturn: 0.05,
     recession: false
