@@ -29,19 +29,41 @@ const PLACEHOLDER_BUDGET = [
 
 function mapPlaidAccounts(accounts, liabilities) {
   const creditCards = liabilities?.credit ?? [];
+
+  // Count how many of each type exist so we can disambiguate labels
+  const typeCount = {};
+  for (const acct of accounts) {
+    const key = acct.type === 'credit' ? 'credit' : acct.subtype ?? acct.type;
+    typeCount[key] = (typeCount[key] ?? 0) + 1;
+  }
+  const typeSeen = {};
+
   const result = [];
   for (const acct of accounts) {
-    const bal = acct.balances.current ?? 0;
+    const bal  = acct.balances.current ?? 0;
+    const mask = acct.mask ? `••${acct.mask}` : '';
+
     if (acct.type === 'depository' && acct.subtype === 'checking') {
-      result.push({ name: 'Checking', bank: `${acct.name} ••${acct.mask}`, bal, delta: 'Connected', tone: 'success' });
+      const key = 'checking';
+      typeSeen[key] = (typeSeen[key] ?? 0) + 1;
+      const label = typeCount[key] > 1 ? `Checking ${typeSeen[key]}` : 'Checking';
+      result.push({ name: label, bank: `${acct.name} ${mask}`, bal, delta: 'Connected', tone: 'success' });
+
     } else if (acct.type === 'depository' && acct.subtype === 'savings') {
-      result.push({ name: 'Savings',  bank: `${acct.name} ••${acct.mask}`, bal, delta: 'Connected', tone: 'primary' });
+      const key = 'savings';
+      typeSeen[key] = (typeSeen[key] ?? 0) + 1;
+      const label = typeCount[key] > 1 ? `Savings ${typeSeen[key]}` : 'Savings';
+      result.push({ name: label, bank: `${acct.name} ${mask}`, bal, delta: 'Connected', tone: 'primary' });
+
     } else if (acct.type === 'credit') {
+      const key = 'credit';
+      typeSeen[key] = (typeSeen[key] ?? 0) + 1;
+      const label = typeCount[key] > 1 ? `Credit ${typeSeen[key]}` : 'Credit';
       const cc          = creditCards.find(c => c.account_id === acct.account_id);
       const utilization = cc && acct.balances.limit ? Math.round((bal / acct.balances.limit) * 100) : null;
       result.push({
-        name: 'Credit',
-        bank: `${acct.name} ••${acct.mask}`,
+        name: label,
+        bank: `${acct.name} ${mask}`,
         bal:  -bal,
         delta: utilization !== null ? `${utilization}% utilization` : 'Connected',
         tone: utilization > 30 ? 'warning' : 'success',
@@ -266,15 +288,19 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(accounts.length, 3)}, 1fr)`, paddingBottom: 8 }}>
-                {accounts.length > 0 ? accounts.map((a, i) => (
-                  <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16 }}>
-                    <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 4 }}>{a.name}</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: a.name === 'Credit' ? 'var(--danger)' : 'var(--primary)' }}>
-                      {a.name === 'Credit' ? '−' : ''}${Math.abs(a.bal).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(Math.max(accounts.length, 3), 4)}, 1fr)`, gap: '0 8px', paddingBottom: 8, flexWrap: 'wrap' }}>
+                {accounts.length > 0 ? accounts.map((a, i) => {
+                  const isCredit = a.bal < 0;
+                  return (
+                    <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16, minWidth: 0 }}>
+                      <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 2 }}>{a.name}</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: isCredit ? 'var(--danger, #ef4444)' : 'var(--primary)' }}>
+                        {isCredit ? '−' : ''}${Math.abs(a.bal).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--fg-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.bank}</div>
                     </div>
-                  </div>
-                )) : ['Checking', 'Savings', 'Credit'].map((name, i) => (
+                  );
+                }) : ['Checking', 'Savings', 'Credit'].map((name, i) => (
                   <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16 }}>
                     <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 4 }}>{name}</div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-3)' }}>—</div>

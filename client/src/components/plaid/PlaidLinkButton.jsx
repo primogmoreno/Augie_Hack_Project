@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePlaidLink } from 'react-plaid-link';
 import api from '../../services/api';
+import { cacheClearAll } from '../../services/cache';
 
 export default function PlaidLink({ onReady, redirectTo = '/dashboard' }) {
   const [linkToken, setLinkToken] = useState(null);
@@ -27,6 +28,9 @@ export default function PlaidLink({ onReady, redirectTo = '/dashboard' }) {
   const onSuccess = useCallback(async (public_token) => {
     try {
       await api.post('/exchange_public_token', { public_token });
+      // Bust all cached account/transaction data so the dashboard fetches fresh
+      // data that includes the newly connected bank.
+      cacheClearAll();
       window.location.href = redirectTo;
     } catch (err) {
       console.error('Token exchange failed:', err);
