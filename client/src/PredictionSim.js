@@ -1,4 +1,7 @@
+import { initNCUAData, predictFuture } from './gemini.js';
+
 const advanceTime = 2;
+let ncuaData = null;
 userState = {
     age: 0,
     cash: 0,
@@ -86,8 +89,8 @@ randomLifeEvents = {
      },
      noMajorEvent: { weight: 0.6, impact: 0 }
 }
-
 addEventListener('DOMContentLoaded', () => {
+    initAppData();
     userState = JSON.parse(sessionStorage.getItem('userState')) || userState;
     economyState = JSON.parse(sessionStorage.getItem('economyState')) || economyState;
 
@@ -157,20 +160,14 @@ function simulateYear() {
     displayRandomEvent(randomEvent);
     }
     
-    // Update economy state
-    const wasInRecession = economyState.recession;
-    if (Math.random() < 0.1) {
-        economyState.recession = !economyState.recession;
-        economyState.marketReturn = economyState.recession ? -0.05 : 0.05;
-        if (economyState.recession !== wasInRecession) {
-            userState.income *= economyState.recession ? 0.9 : (1/0.9);
-        }
-    }
+   
 
     // Save state    
     sessionStorage.setItem('userState', JSON.stringify(userState));
-    sessionStorage.setItem('economyState', JSON.stringify(economyState));
+    
     displayCurrentData();
+    await predictFuture();
+
 }
 
 function getRandomLifeEvent() {
@@ -299,3 +296,28 @@ function displayCurrentData(){
     document.getElementById('marketReturn').innerText = (economyState.marketReturn * 100).toFixed(2) + '%';
     document.getElementById('recession').innerText = economyState.recession ? 'Yes' : 'No';
 }
+
+
+function predictFuture() {
+    const wasInRecession = economyState.recession;
+    if(!ncuaData){
+        console.error("No NCUA data available for prediction.");
+        return null;
+    }
+    const results = await predictFuture(advanceTime);
+    if(results){
+        economyState.inflationRate = results.inflationRate;
+        economyState.marketReturn = results.marketRate;
+        economyState.recession = Math.random() < results.recessionProbability;
+
+        if(economyState.recession !== wasInRecession){
+            userState.income *= economyState.recession ? 0.9 : (1/0.9);
+        }
+    }
+    sessionStorage.setItem('economyState', JSON.stringify(economyState));
+}
+async function initAppData() {
+    // Use the live fetch logic from before, but save it to the buffer
+    ncuaData = await initNCUAData(); 
+}
+

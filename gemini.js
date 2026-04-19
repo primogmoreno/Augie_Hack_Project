@@ -81,5 +81,73 @@ Rules:
     res.status(500).json({ error: 'Gemini request failed' });
   }
 });
+// This stays in memory for the duration of the session
+let cachedNCUAData = null;
+
+/**
+ * Call this ONCE when the app starts
+ */
+export async function initNCUAData() {
+    if (cachedNCUAData) return cachedNCUAData;
+
+    const targetUrl = "https://ncua.gov/analysis/cuso-economic-data/credit-union-bank-rates";
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+    try {
+        const response = await fetch(proxyUrl);
+        const json = await response.json();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(json.contents, 'text/html');
+        const rows = Array.from(doc.querySelectorAll('table tr'));
+
+        cachedNCUAData = rows.map(row => {
+            const cells = row.querySelectorAll('td');
+            return {
+                product: cells[0]?.innerText.trim(),
+                cu_rate: parseFloat(cells[1]?.innerText),
+                bank_rate: parseFloat(cells[2]?.innerText)
+            };
+        }).filter(item => item.product && !isNaN(item.cu_rate));
+
+        console.log("NCUA Data cached successfully.");
+        return cachedNCUAData;
+    } catch (err) {
+        console.error("Failed to fetch NCUA data:", err);
+        return null;
+    }
+}
+
+export async function predictFuture( advanceTime) {
+    // 1. Construct the prompt with passed-in variables
+    const prompt = `Context: I am providing historical data from the NCUA. ` +
+    `Data: ${JSON.stringify(cachedNCUAData)}. ` +
+    `Task: Analyze auto and mortgage loan trends. Predict changes over ${advanceTime} years. ` +
+    `Return JSON: { "inflationRate": float, "marketRate": float, "recessionProbability": float }`;
+    
+    try {
+        const response = await fetch(URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.1,
+                    responseMimeType: 'application/json'
+                }
+            })
+        });
+
+        const json = await response.json();
+        const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!rawText) throw new Error("No response from AI");
+
+        return JSON.parse(rawText); // Just return the object
+    } catch (error) {
+        console.error("Prediction fetch failed:", error);
+        return null;
+    }
+}
 
 module.exports = router;
