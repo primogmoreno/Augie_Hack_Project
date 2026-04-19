@@ -18,6 +18,7 @@ export default function Button({ variant = 'primary', size = 'md', children, onC
       type={type}
       disabled={disabled}
       onClick={onClick}
+      className="btn-pressable"
       style={{
         fontFamily: 'var(--font-sans)',
         fontWeight: 600,

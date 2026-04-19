@@ -38,9 +38,9 @@ def _serialize(obj):
 # ── Transaction enrichment ─────────────────────────────────────────────────────
 
 CATEGORY_ICONS = {
-    'Food & Dining':      '🍽', 'Shopping':            '🛍', 'Transport':  '🚗',
-    'Entertainment':      '🎬', 'Utilities':            '⚡', 'Income':     '💰',
-    'Healthcare':         '🏥', 'Savings & Investing':  '🏦', 'Other':      '📦',
+    'Food & Dining':      'dining', 'Shopping':            'shopping', 'Transport':  'transport',
+    'Entertainment':      'entertainment', 'Utilities':            'utilities', 'Income':     'income',
+    'Healthcare':         'healthcare', 'Savings & Investing':  'savings', 'Other':      'other',
 }
 
 CATEGORY_COLORS = {
@@ -133,7 +133,7 @@ def _normalize_tx(t):
         'category':       cat,
         'type':           tx_type,
         'is_recurring':   False,
-        'merchant_icon':  CATEGORY_ICONS.get(cat, '📦'),
+        'merchant_icon':  CATEGORY_ICONS.get(cat, 'other'),
         'pending':        t.get('pending', False),
     }
 

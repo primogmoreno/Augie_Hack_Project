@@ -2,16 +2,15 @@ import TransactionRow from './TransactionRow';
 import Button from '../ui/Button';
 
 const COL_HEADERS = [
-  { label: 'Transaction',   width: '35%' },
-  { label: 'Category',      width: '16%' },
-  { label: 'Amount',        width: '18%' },
-  { label: '% of Spending', width: '20%' },
-  { label: 'Type',          width: '11%' },
+  { label: 'Transaction', width: '45%' },
+  { label: 'Category',    width: '25%' },
+  { label: 'Amount',      width: '18%' },
+  { label: 'Type',        width: '12%' },
 ];
 
 function SkeletonRow() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '35% 16% 18% 20% 11%', gap: 8, padding: '13px 0', borderBottom: '1px solid var(--border-1)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '45% 25% 18% 12%', gap: 8, padding: '13px 0', borderBottom: '1px solid var(--border-1)' }}>
       {[140, 80, 60, 100, 50].map((w, i) => (
         <div key={i} style={{ height: 14, width: w, borderRadius: 6, background: 'var(--ink-100)', animation: 'pulse 1.4s ease-in-out infinite' }} />
       ))}
@@ -19,14 +18,13 @@ function SkeletonRow() {
   );
 }
 
-export default function TransactionTable({ transactions, totalSpent, loading, onResetFilters }) {
-  const maxAmount = transactions.length > 0 ? Math.max(...transactions.map(t => Math.abs(t.amount))) : 0;
+export default function TransactionTable({ transactions, loading, onResetFilters }) {
 
   return (
     <div style={{ background: '#fff', border: '1px solid var(--border-1)', borderRadius: 12, padding: '0 20px' }}>
       {/* Column headers */}
       <div style={{
-        display: 'grid', gridTemplateColumns: '35% 16% 18% 20% 11%',
+        display: 'grid', gridTemplateColumns: '45% 25% 18% 12%',
         gap: 8, padding: '12px 0', borderBottom: '1px solid var(--border-1)',
       }}>
         {COL_HEADERS.map(h => (
@@ -59,8 +57,6 @@ export default function TransactionTable({ transactions, totalSpent, loading, on
         <TransactionRow
           key={tx.id ?? i}
           tx={tx}
-          totalSpent={totalSpent}
-          maxAmount={maxAmount}
           isLast={i === transactions.length - 1}
         />
       ))}

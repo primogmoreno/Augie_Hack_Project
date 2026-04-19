@@ -5,6 +5,7 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Icon, { ICONS } from '../components/ui/Icon';
+import CategoryIcon from '../components/ui/CategoryIcon';
 import RateRealityCheck from '../components/dashboard/RateRealityCheck';
 import Explainer from '../components/dashboard/Explainer';
 import PlaidLink from '../components/plaid/PlaidLinkButton';
@@ -12,11 +13,11 @@ import api from '../services/api';
 import { cacheGet, cacheSet } from '../services/cache';
 
 const FALLBACK_TXS = [
-  { icon: ICONS.coffee, name: 'Blue Bottle Coffee', sub: 'Today · 8:14 AM',  tag: 'Dining',       amt: -6.25             },
-  { icon: ICONS.cart,   name: "Trader Joe's",        sub: 'Yesterday',        tag: 'Groceries',    amt: -84.30            },
-  { icon: ICONS.repeat, name: 'Netflix',             sub: 'Apr 14 · monthly', tag: 'Subscription', amt: -15.49            },
-  { icon: ICONS.repeat, name: 'Payroll — Acme Co.',  sub: 'Apr 15',           tag: 'Income',       amt: 2450.00, pos: true },
-  { icon: ICONS.coffee, name: 'Blue Bottle Coffee',  sub: 'Apr 13',           tag: 'Dining',       amt: -6.25             },
+  { icon: 'dining', name: 'Blue Bottle Coffee', sub: 'Today · 8:14 AM',  tag: 'Food & Dining', amt: -6.25             },
+  { icon: 'shopping', name: "Trader Joe's",     sub: 'Yesterday',        tag: 'Shopping',      amt: -84.30            },
+  { icon: 'entertainment', name: 'Netflix',     sub: 'Apr 14 · monthly', tag: 'Entertainment', amt: -15.49            },
+  { icon: 'income', name: 'Payroll — Acme Co.', sub: 'Apr 15',           tag: 'Income',        amt: 2450.00, pos: true },
+  { icon: 'dining', name: 'Blue Bottle Coffee', sub: 'Apr 13',           tag: 'Food & Dining', amt: -6.25             },
 ];
 
 const PLACEHOLDER_BUDGET = [
@@ -173,23 +174,14 @@ export default function Dashboard() {
         .get('/transactions')
         .then(({ data }) => {
           if (data.pending || !data.transactions?.length) return;
-          const iconFor = (cat) => {
-            const c = (cat ?? '').toLowerCase();
-            if (c.includes('food') || c.includes('restaurant') || c.includes('coffee')) return ICONS.coffee;
-            if (c.includes('grocer') || c.includes('supermarket')) return ICONS.cart;
-            return ICONS.repeat;
-          };
 
           const mapped = data.transactions.slice(0, 5).map((t) => ({
-            icon: iconFor(t.personal_finance_category?.primary ?? t.category?.[0]),
-            name: t.name,
-            sub: new Date(t.date).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-            }),
-            tag: t.category ?? 'Other',
+            icon: t.merchant_icon || 'other',
+            name: t.merchant || t.name || 'Unknown',
+            sub: t.date_formatted || t.date,
+            tag: t.category || 'Other',
             amt: t.amount,
-            pos: t.amount < 0,
+            pos: t.type === 'credit' || t.amount < 0,
           }));
 
           setRecentTxs(mapped);
@@ -247,7 +239,7 @@ console.log(user.displayName);
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--ink-0)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--ink-0)', animation: 'fadeIn var(--dur-slow) var(--ease-out)' }}>
 
         {/* ── NOT CONNECTED: prominent CTA banner ──────────────────── */}
         {!loading && !connected && (
@@ -458,12 +450,12 @@ console.log(user.displayName);
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {FALLBACK_TXS.map((t, i) => (
-                  <div key={i} style={{
+                  <div key={i} className="tx-row" style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
                     borderBottom: i < FALLBACK_TXS.length - 1 ? '1px solid var(--border-1)' : 0,
                   }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ink-50)', color: 'var(--fg-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                      <Icon d={connected ? t.icon : t.icon} size={16} />
+                    <div className="category-icon-box" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ink-50)', color: 'var(--fg-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                      <CategoryIcon iconKey={t.icon} size={16} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -494,16 +486,14 @@ console.log(user.displayName);
             <button
               key={card.path}
               onClick={() => !card.disabled && navigate(card.path)}
+              className={card.disabled ? undefined : 'surface-lift'}
               style={{
                 display: 'flex', alignItems: 'center', gap: 14,
                 padding: '16px 18px', borderRadius: 14,
                 border: '1px solid var(--border-1)',
                 background: '#fff', cursor: card.disabled ? 'default' : 'pointer', textAlign: 'left',
                 opacity: card.disabled ? 0.55 : 1,
-                transition: 'box-shadow var(--dur-fast) var(--ease-out)',
               }}
-              onMouseEnter={e => { if (!card.disabled) e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
             >
               <div style={{
                 width: 36, height: 36, borderRadius: 10, flexShrink: 0,

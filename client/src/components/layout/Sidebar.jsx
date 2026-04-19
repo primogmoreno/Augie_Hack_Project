@@ -44,6 +44,7 @@ export default function Sidebar() {
           <button
             key={item.id}
             onClick={() => navigate(item.id)}
+            className={active ? 'nav-item nav-item--active' : 'nav-item'}
             style={{
               display: 'flex',
               alignItems: 'center',

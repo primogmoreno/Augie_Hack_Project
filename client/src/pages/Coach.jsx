@@ -134,6 +134,7 @@ export default function Coach() {
                     <button
                       key={s}
                       onClick={() => send(s)}
+                      className="surface-lift btn-pressable"
                       style={{
                         padding: '6px 12px',
                         border: '1px solid var(--border-1)',
@@ -143,7 +144,6 @@ export default function Coach() {
                         cursor: 'pointer',
                         color: 'var(--fg-1)',
                         fontFamily: 'var(--font-sans)',
-                        transition: 'box-shadow var(--dur-fast) var(--ease-out)',
                       }}
                     >
                       {s}

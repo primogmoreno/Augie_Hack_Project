@@ -1,3 +1,5 @@
+import CategoryIcon from '../ui/CategoryIcon';
+
 function StatCard({ label, value, sub, valueColor }) {
   return (
     <div style={{ background: 'var(--ink-50)', border: '1px solid var(--border-1)', borderRadius: 12, padding: '18px 20px' }}>
@@ -58,8 +60,9 @@ export default function MetricCards({ summary }) {
             width: 44, height: 44, borderRadius: 12, flexShrink: 0,
             background: 'var(--teal-500)',
             display: 'grid', placeItems: 'center',
-            fontSize: 22,
-          }}>🏦</div>
+          }}>
+            <CategoryIcon iconKey="savings" size={22} color="#fff" />
+          </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal-600)', marginBottom: 4 }}>
               Amount Saved / Invested

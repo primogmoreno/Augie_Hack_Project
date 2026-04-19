@@ -1,3 +1,5 @@
+import CategoryIcon from '../ui/CategoryIcon';
+
 const CATEGORY_COLORS = {
   'Food & Dining':       { primary: '#185FA5', light: '#E6F1FB' },
   'Shopping':            { primary: '#639922', light: '#EAF3DE' },
@@ -10,17 +12,15 @@ const CATEGORY_COLORS = {
   'Other':               { primary: '#888780', light: '#F1EFE8' },
 };
 
-export default function TransactionRow({ tx, totalSpent, maxAmount, isLast }) {
+export default function TransactionRow({ tx, isLast }) {
   const colors = CATEGORY_COLORS[tx.category] ?? CATEGORY_COLORS['Other'];
   const isIncome = tx.type === 'credit';
   const absAmt = Math.abs(tx.amount);
-  const pct = totalSpent > 0 ? (absAmt / totalSpent * 100).toFixed(1) : 0;
-  const barWidth = maxAmount > 0 ? Math.round(absAmt / maxAmount * 100) : 0;
 
   return (
-    <div style={{
+    <div className="tx-row" style={{
       display: 'grid',
-      gridTemplateColumns: '35% 16% 18% 20% 11%',
+      gridTemplateColumns: '45% 25% 18% 12%',
       alignItems: 'center',
       padding: '11px 0',
       borderBottom: isLast ? 'none' : '1px solid var(--border-1)',
@@ -28,13 +28,12 @@ export default function TransactionRow({ tx, totalSpent, maxAmount, isLast }) {
     }}>
       {/* Merchant */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
+        <div className="category-icon-box" style={{
           width: 32, height: 32, borderRadius: 8, flexShrink: 0,
           background: colors.light,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 15,
         }}>
-          {tx.merchant_icon}
+          <CategoryIcon iconKey={tx.merchant_icon} size={16} color={colors.primary} />
         </div>
         <div>
           <div style={{ fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -62,20 +61,6 @@ export default function TransactionRow({ tx, totalSpent, maxAmount, isLast }) {
       {/* Amount */}
       <div className="money" style={{ fontSize: 13, fontWeight: 500, color: isIncome ? '#3B6D11' : '#A32D2D' }}>
         {isIncome ? '+' : '−'}${absAmt.toFixed(2)}
-      </div>
-
-      {/* % of spending bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {isIncome ? (
-          <span style={{ fontSize: 11, color: 'var(--fg-3)' }}>—</span>
-        ) : (
-          <>
-            <div style={{ flex: 1, height: 6, background: 'var(--ink-100)', borderRadius: 999 }}>
-              <div style={{ width: `${barWidth}%`, height: '100%', background: colors.primary, borderRadius: 999 }} />
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--fg-3)', width: 36, textAlign: 'right', flexShrink: 0 }}>{pct}%</span>
-          </>
-        )}
       </div>
 
       {/* Type badge */}

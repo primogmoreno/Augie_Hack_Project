@@ -201,7 +201,7 @@ export default function TransactionHistory() {
 
         {/* ── CONNECTED ─────────────────────────────────────────────── */}
         {isConnected === true && (
-          <>
+          <div style={{ animation: 'fadeIn var(--dur-slow) var(--ease-out)' }}>
             {error && (
               <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 14, color: 'var(--danger)' }}>{error}</span>
@@ -228,11 +228,10 @@ export default function TransactionHistory() {
 
             <TransactionTable
               transactions={filteredTransactions}
-              totalSpent={summary?.total_spent ?? 0}
               loading={loading}
               onResetFilters={resetFilters}
             />
-          </>
+          </div>
         )}
 
         {/* ── LOADING ───────────────────────────────────────────────── */}

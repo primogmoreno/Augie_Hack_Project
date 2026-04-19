@@ -2,6 +2,7 @@ export default function Card({ children, style, onClick }) {
   return (
     <div
       onClick={onClick}
+      className={onClick ? 'card-clickable' : undefined}
       style={{
         background: '#fff',
         border: '1px solid var(--border-1)',

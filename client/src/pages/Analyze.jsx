@@ -364,7 +364,7 @@ export default function Analyze() {
               </Card>
 
               {analysis && (
-                <Card style={{ padding: 28 }}>
+                <Card style={{ padding: 28, animation: 'fadeIn var(--dur-slow) var(--ease-out)' }}>
                   <div
                     style={{
                       display: "flex",

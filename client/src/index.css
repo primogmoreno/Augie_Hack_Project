@@ -76,6 +76,7 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --dur-fast: 120ms;
   --dur-base: 200ms;
+  --dur-slow: 300ms;
 }
 
 html { font-size: 16px; }
@@ -123,4 +124,69 @@ p { margin: 0; }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
+}
+
+/* ── Micro-animation utilities ───────────────────────────── */
+
+/* 1. Button press feedback */
+.btn-pressable:active {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
+
+/* 2a. Clickable Card hover lift */
+.card-clickable {
+  transition: transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.card-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 2b. Surface lift — for raw button/div interactive surfaces */
+.surface-lift {
+  transition: transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.surface-lift:hover:not([disabled]) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 3. Transaction row hover highlight */
+.tx-row {
+  transition: background var(--dur-fast) var(--ease-out);
+  border-radius: 8px;
+}
+.tx-row:hover {
+  background: var(--ink-50);
+}
+
+/* 4. Sidebar active indicator bar */
+.nav-item {
+  position: relative;
+}
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--teal-500);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.nav-item.nav-item--active::before {
+  transform: translateY(-50%) scaleY(1);
+}
+
+/* 6. CategoryIcon scale on parent row hover */
+.category-icon-box {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.tx-row:hover .category-icon-box {
+  transform: scale(1.1);
 }

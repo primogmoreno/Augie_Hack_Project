@@ -1,5 +1,6 @@
 import { CATEGORIES } from '../../data/dictionaryCategories';
 import TermCard from './TermCard';
+import Icon, { ICONS } from '../ui/Icon';
 
 export default function TermGrid({
   terms,
@@ -30,7 +31,7 @@ export default function TermGrid({
           {metaLabel}
         </div>
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-3)', fontFamily: 'var(--font-sans)' }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+          <div style={{ marginBottom: 12, color: 'var(--fg-3)' }}><Icon d={ICONS.search} size={32} stroke={1.5} /></div>
           <div style={{ fontSize: 14, marginBottom: 16 }}>No terms match your search.</div>
           <button
             onClick={onClearSearch}
