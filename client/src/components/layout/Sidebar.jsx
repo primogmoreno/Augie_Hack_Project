@@ -25,6 +25,7 @@ function NavItem({ item, active, navigate }) {
     <button
       key={item.id}
       onClick={() => navigate(item.id)}
+      data-tour={`nav-${item.id.replace('/', '')}`}
       className={active ? 'nav-item nav-item--active' : 'nav-item'}
       style={{
         display: 'flex',

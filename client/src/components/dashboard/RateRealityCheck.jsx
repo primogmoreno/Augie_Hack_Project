@@ -23,6 +23,8 @@ export default function RateRealityCheck({ userApr = 21.99, userBalance = 1284.5
   const [series, setSeries] = useState(FALLBACK_DATA);
   const [latest, setLatest] = useState(FALLBACK_DATA.at(-1));
   const [loading, setLoading] = useState(true);
+  const [fetchedAt, setFetchedAt] = useState(null);
+  const [isFallback, setIsFallback] = useState(false);
 
   useEffect(() => {
     api.get('/rates')
@@ -30,9 +32,11 @@ export default function RateRealityCheck({ userApr = 21.99, userBalance = 1284.5
         if (data.series?.length) {
           setSeries(data.series);
           setLatest(data.latest ?? data.series.at(-1));
+          setFetchedAt(data.fetchedAt ?? null);
+          setIsFallback(!!data.isFallback);
         }
       })
-      .catch(() => { /* silent fallback — state already has FALLBACK_DATA */ })
+      .catch(() => { setIsFallback(true); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -49,7 +53,7 @@ export default function RateRealityCheck({ userApr = 21.99, userBalance = 1284.5
   }
 
   return (
-    <Card style={{ padding: 24 }}>
+    <Card data-tour="rate-dashboard" style={{ padding: 24 }}>
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-2)', marginBottom: 4 }}>
           Rate Reality Check
@@ -99,6 +103,26 @@ export default function RateRealityCheck({ userApr = 21.99, userBalance = 1284.5
         <strong className="money">${annualSavings}/year</strong> on your current balance.{' '}
         <em>Ask your credit union: "Can I qualify for your current credit card rate?"</em>
       </div>
+
+      {isFallback && (
+        <div style={{
+          marginTop: 10,
+          background: 'var(--warning-bg, #fffbeb)',
+          border: '1px solid var(--warning-border, #fcd34d)',
+          borderRadius: 'var(--radius-md)',
+          padding: '8px 12px',
+          fontSize: 12,
+          color: 'var(--warning, #92400e)',
+        }}>
+          Using cached rate reference — live data will update shortly.
+        </div>
+      )}
+
+      {fetchedAt && !isFallback && (
+        <div style={{ marginTop: 8, fontSize: 11, color: 'var(--fg-3)', textAlign: 'right' }}>
+          Data last updated: {new Date(fetchedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+        </div>
+      )}
     </Card>
   );
 }

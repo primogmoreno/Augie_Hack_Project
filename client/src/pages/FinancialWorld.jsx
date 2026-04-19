@@ -9,6 +9,7 @@ import TreeCanvas from '../components/tree/TreeCanvas';
 import HealthScoreRing from '../components/tree/HealthScoreRing';
 import MilestoneStrip from '../components/tree/MilestoneStrip';
 import { useTreeAnimation } from '../hooks/useTreeAnimation';
+import LiteracyVisualization from '../components/literacy/LiteracyVisualization';
 import api from '../services/api';
 
 const PILLAR_META = [
@@ -276,6 +277,11 @@ export default function FinancialWorld() {
             {/* Milestone strip */}
             <Card style={{ padding: '20px 24px' }}>
               <MilestoneStrip unlockedMilestones={data.unlockedMilestones} />
+            </Card>
+
+            {/* Literacy Growth Visualization */}
+            <Card style={{ padding: '20px 24px', marginTop: 20 }}>
+              <LiteracyVisualization />
             </Card>
 
           </div>

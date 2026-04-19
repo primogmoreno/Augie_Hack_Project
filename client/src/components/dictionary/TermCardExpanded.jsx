@@ -51,11 +51,13 @@ export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, on
         {/* Right column */}
         <div>
           {term.hasPersonalData && (
-            <PersonalContextBlock
-              contextString={contextString}
-              loading={contextLoading}
-              isConnected={isConnected}
-            />
+            <div data-tour="dictionary-personal-block">
+              <PersonalContextBlock
+                contextString={contextString}
+                loading={contextLoading}
+                isConnected={isConnected}
+              />
+            </div>
           )}
 
           <div style={{ marginBottom: 16 }}>
@@ -71,6 +73,7 @@ export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, on
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
             <button
+              data-tour="ask-about-this"
               onClick={handleAsk}
               style={{
                 padding: '8px 14px',

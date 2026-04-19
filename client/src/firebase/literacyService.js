@@ -2,6 +2,7 @@ import { database } from '../firebase-config';
 import {
   doc, getDoc, setDoc, updateDoc, addDoc,
   collection, serverTimestamp, arrayUnion,
+  query, orderBy, getDocs,
 } from 'firebase/firestore';
 import { computeArchetype } from '../utils/surveyScoring';
 
@@ -208,6 +209,13 @@ export async function recordMilestoneUnlock(userId, milestoneId, literacyIncreme
       delta: { literacy: literacyIncrement },
     });
   }
+}
+
+export async function getLiteracySnapshots(userId) {
+  const ref = collection(db, 'users', userId, 'snapshots');
+  const q = query(ref, orderBy('createdAt', 'asc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 export async function recordSurveyRetake(userId, payload) {

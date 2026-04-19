@@ -87,7 +87,7 @@ export default function Coach() {
   }, [messages, loading]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div data-tour="banker-chat" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <TopBar title="Coach" subtitle="Powered by Gemini" />
 
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '28px 40px', background: 'var(--bg-page)' }}>

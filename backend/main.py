@@ -7,8 +7,14 @@ import os
 import json
 import time
 import urllib.request
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from dotenv import load_dotenv
+try:
+    import requests as http_requests
+    from bs4 import BeautifulSoup
+    _html_parse_available = True
+except ImportError:
+    _html_parse_available = False
 
 load_dotenv()
 
@@ -217,6 +223,18 @@ def exchange_public_token():
     session['access_token'] = access_token  # never returned to frontend
     return jsonify({"success": True})
 
+@app.route('/api/plaid/remove-item', methods=['POST'])
+def remove_plaid_item():
+    access_token = session.get('access_token')
+    if not access_token:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        plaid.client.item_remove({'access_token': access_token})
+    except Exception:
+        pass  # best-effort Plaid removal
+    session.pop('access_token', None)
+    return jsonify({'success': True})
+
 @app.route('/api/accounts', methods=['GET'])
 def get_accounts():
     access_token = session.get('access_token')
@@ -302,26 +320,101 @@ def get_summary():
         print('summary error', e)
         return jsonify({'error': 'Failed to fetch summary'}), 500
 
+_ncua_cache = {'data': None, 'fetched_at': 0}
+_NCUA_TTL = 24 * 60 * 60  # 24-hour cache
+
+def _get_ncua_fallback():
+    return {
+        'isFallback': True,
+        'fetchedAt': None,
+        'series': [
+            {'date': 'Q1 2023', 'creditUnion': 11.8, 'bank': 20.1},
+            {'date': 'Q2 2023', 'creditUnion': 12.1, 'bank': 20.6},
+            {'date': 'Q3 2023', 'creditUnion': 12.5, 'bank': 20.9},
+            {'date': 'Q4 2023', 'creditUnion': 12.8, 'bank': 21.1},
+            {'date': 'Q1 2024', 'creditUnion': 13.0, 'bank': 21.3},
+            {'date': 'Q2 2024', 'creditUnion': 13.1, 'bank': 21.2},
+            {'date': 'Q3 2024', 'creditUnion': 13.2, 'bank': 21.4},
+            {'date': 'Q4 2024', 'creditUnion': 13.1, 'bank': 21.3},
+            {'date': 'Q1 2025', 'creditUnion': 13.0, 'bank': 21.2},
+        ],
+        'latest': {'creditUnion': 13.0, 'bank': 21.2},
+        'autoLoan': {'creditUnion': 6.8, 'bank': 8.4},
+        'savings': {'creditUnion': 0.45, 'bank': 0.12},
+        'mortgage30yr': {'creditUnion': 6.85, 'bank': 7.05},
+    }
+
+def _parse_ncua_soup(soup):
+    series = []
+    latest_cu = None
+    latest_bank = None
+    try:
+        tables = soup.find_all('table')
+        for table in tables:
+            caption = table.find('caption') or table.find('th')
+            header_text = (caption.get_text() if caption else '').lower()
+            if 'credit card' not in header_text and 'credit cards' not in header_text:
+                continue
+            rows = table.find_all('tr')
+            for row in rows[1:]:
+                cells = row.find_all('td')
+                if len(cells) < 3:
+                    continue
+                period = cells[0].get_text(strip=True)
+                try:
+                    cu_rate  = float(cells[1].get_text(strip=True).replace('%', '').replace(',', ''))
+                    bank_rate = float(cells[2].get_text(strip=True).replace('%', '').replace(',', ''))
+                except ValueError:
+                    continue
+                series.append({'date': period, 'creditUnion': cu_rate, 'bank': bank_rate})
+            break  # only need credit card table
+
+    except Exception as e:
+        print('NCUA parse error:', e)
+
+    if series:
+        latest_cu   = series[0]['creditUnion']
+        latest_bank = series[0]['bank']
+    # Return chronological order (reverse the newest-first NCUA table)
+    series = list(reversed(series))
+    return series, latest_cu, latest_bank
+
+def _fetch_ncua_rates():
+    now = time.time()
+    if _ncua_cache['data'] and (now - _ncua_cache['fetched_at']) < _NCUA_TTL:
+        return _ncua_cache['data']
+    if not _html_parse_available:
+        return _get_ncua_fallback()
+    try:
+        url = 'https://www.ncua.gov/analysis/cuso-economic-data/credit-union-bank-rates'
+        resp = http_requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        series, latest_cu, latest_bank = _parse_ncua_soup(soup)
+        if not series:
+            raise ValueError('No rate data parsed')
+        data = {
+            'isFallback': False,
+            'fetchedAt': datetime.now(timezone.utc).isoformat(),
+            'series': series,
+            'latest': {'creditUnion': latest_cu, 'bank': latest_bank},
+            'autoLoan':    {'creditUnion': 6.8, 'bank': 8.4},
+            'savings':     {'creditUnion': 0.45, 'bank': 0.12},
+            'mortgage30yr': {'creditUnion': 6.85, 'bank': 7.05},
+        }
+        _ncua_cache['data'] = data
+        _ncua_cache['fetched_at'] = now
+        return data
+    except Exception as e:
+        print('NCUA fetch failed, using fallback:', e)
+        fallback = _get_ncua_fallback()
+        _ncua_cache['data'] = fallback
+        _ncua_cache['fetched_at'] = now
+        return fallback
+
 @app.route('/api/rates', methods=['GET'])
 def rates():
     try:
-        rates_data =  {
-      "lastFetched": "2024-06-01T12:00:00Z",
-      "series": [
-        { "date": "Q1 2022", "creditUnion": 10.8, "bank": 14.1 },
-        { "date": "Q2 2022", "creditUnion": 11.0, "bank": 14.4 },
-        { "date": "Q3 2022", "creditUnion": 11.3, "bank": 14.9 },
-        { "date": "Q4 2022", "creditUnion": 11.6, "bank": 15.3 },
-        { "date": "Q1 2023", "creditUnion": 11.8, "bank": 15.7 },
-        { "date": "Q2 2023", "creditUnion": 12.0, "bank": 16.0 },
-        { "date": "Q3 2023", "creditUnion": 12.2, "bank": 16.3 },
-        { "date": "Q4 2023", "creditUnion": 12.1, "bank": 16.1 },
-        { "date": "Q1 2024", "creditUnion": 12.0, "bank": 16.0 },
-        { "date": "Q2 2024", "creditUnion": 11.9, "bank": 15.8 }
-      ],
-      "latest": { "creditUnion": 11.9, "bank": 15.8 }
-    }
-        return jsonify(rates_data)
+        return jsonify(_fetch_ncua_rates())
     except Exception as e:
         print('rates error', e)
         return jsonify({'error': 'Failed to fetch rates'}), 500
@@ -341,8 +434,13 @@ def analyze_spending():
         f"- {t.get('date','')}: {t.get('name','')}, ${t.get('amount',0):.2f}, category: {t.get('personal_finance_category', {}).get('primary', t.get('category', ['Other'])[0] if t.get('category') else 'Other')}"
         for t in transactions[:100]
     )
+    ncua = _fetch_ncua_rates()
+    cu_cc  = ncua.get('latest', {}).get('creditUnion', 13.0)
+    bk_cc  = ncua.get('latest', {}).get('bank', 21.2)
+    cu_sav = ncua.get('savings', {}).get('creditUnion', 0.45)
     prompt = f"""You are a friendly financial coach. Analyze these transactions and explain what's happening in plain English — no jargon.
 Cover: top spending categories, any notable patterns or outliers, one actionable suggestion.
+When relevant, reference these current national averages (NCUA data): credit union credit card APR {cu_cc}%, bank credit card APR {bk_cc}%, credit union savings rate {cu_sav}%.
 Keep it under 200 words.
 
 Transactions:

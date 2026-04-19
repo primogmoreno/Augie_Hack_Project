@@ -1,9 +1,13 @@
 import { useState, useCallback } from 'react';
 import { TERMS } from '../data/dictionaryTerms';
+import useAuth from '../services/useAuth';
+import { recordDictionaryTermsRead } from '../firebase/literacyService';
 
 const STORAGE_KEY = 'finlit_dictionary_read';
 
 export function useDictionaryProgress(onMilestoneUnlock) {
+  const { user } = useAuth();
+
   const [readTerms, setReadTerms] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -22,13 +26,17 @@ export function useDictionaryProgress(onMilestoneUnlock) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
       } catch {}
 
+      if (user?.uid) {
+        recordDictionaryTermsRead(user.uid, [termId]).catch(() => {});
+      }
+
       const term = TERMS.find(t => t.id === termId);
       if (term?.milestone && onMilestoneUnlock) {
         onMilestoneUnlock(termId, term.name);
       }
       return next;
     });
-  }, [onMilestoneUnlock]);
+  }, [onMilestoneUnlock, user]);
 
   const isRead = useCallback((termId) => readTerms.has(termId), [readTerms]);
 

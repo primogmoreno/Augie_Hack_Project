@@ -10,13 +10,16 @@ import Analyze from './pages/Analyze';
 import FinancialWorld from './pages/FinancialWorld';
 import {Login,Logout} from './pages/Login';
 import OnboardingSurvey from './pages/onboarding/OnboardingSurvey';
+import Settings from './pages/Settings';
+import GuidedTour from './components/tour/GuidedTour';
+import { useGuidedTour } from './hooks/useGuidedTour';
 
 const NO_SIDEBAR_PATHS = ['/', '/onboarding/survey'];
 
 function Layout() {
   const location = useLocation();
   const isHome = location.pathname === '/';
-  const hideSidebar = NO_SIDEBAR_PATHS.includes(location.pathname);
+  const tour = useGuidedTour();
 
   if (isHome) {
     return <Login />;
@@ -38,19 +41,20 @@ function Layout() {
           <Route path="/world"        element={<FinancialWorld />} />
           <Route path="/coach"        element={<Coach />} />
           <Route path="/dictionary"   element={<Dictionary />} />
-          <Route path="/settings"     element={<SettingsPlaceholder />} />
+          <Route path="/settings"     element={<Settings onRestartTour={tour.restart} />} />
           <Route path="/logout"       element={<Logout />} />
           <Route path="*"             element={<Home />} />
         </Routes>
       </div>
-    </div>
-  );
-}
-
-function SettingsPlaceholder() {
-  return (
-    <div style={{ padding: '48px 40px', color: 'var(--fg-3)', fontFamily: 'var(--font-display)', fontSize: 24 }}>
-      Settings coming soon.
+      <GuidedTour
+        active={tour.active}
+        step={tour.step}
+        currentStep={tour.currentStep}
+        totalSteps={tour.totalSteps}
+        onNext={tour.next}
+        onPrev={tour.prev}
+        onSkip={tour.skip}
+      />
     </div>
   );
 }
