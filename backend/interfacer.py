@@ -29,7 +29,7 @@ class PlaidClient:
         api_client = plaid.ApiClient(configuration)
         self.client = plaid_api.PlaidApi(api_client)
 
-    def create_link_token(self, user_id: str, client_name: str = "FinLit") -> str:
+    def create_link_token(self, user_id: str, client_name: str = "F.I.R.E") -> str:
         """ Creates a link token for the frontend to initialize Plaid Link.
         Serves as Step 1 in the Plaid flow. The flask app will call this endpoint to get a link token, which is then sent to the frontend.
         """

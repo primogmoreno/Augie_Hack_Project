@@ -3,7 +3,7 @@ import { database } from '../firebase-config';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import useAuth from '../services/useAuth';
 
-const STORAGE_KEY = 'finlit_preferences';
+const STORAGE_KEY = 'fire_preferences';
 
 const DEFAULTS = {
   transactionDays: 90,

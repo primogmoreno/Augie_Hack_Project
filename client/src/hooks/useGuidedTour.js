@@ -4,7 +4,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import useAuth from '../services/useAuth';
 import { TOUR_STEPS } from '../data/tourSteps';
 
-const STORAGE_KEY = 'finlit_tour_completed';
+const STORAGE_KEY = 'fire_tour_completed';
 
 export function useGuidedTour() {
   const { user, isRegistered } = useAuth();

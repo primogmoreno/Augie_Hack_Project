@@ -216,20 +216,27 @@ def create_link_token():
         print('create_link_token error', e)
         return jsonify({'error': str(e)}), 500
     
+def _get_tokens():
+    """Return the list of Plaid access tokens, migrating legacy single-token sessions."""
+    tokens = session.get('access_tokens')
+    if isinstance(tokens, list):
+        return tokens
+    legacy = session.get('access_token')
+    if legacy:
+        migrated = [legacy]
+        session['access_tokens'] = migrated
+        session.modified = True
+        return migrated
+    return []
+
 @app.route("/api/exchange_public_token", methods=["POST"])
 def exchange_public_token():
     public_token = request.json.get("public_token")
-    access_token, item_id = plaid.exchange_public_token(public_token)
-    
-    print("ACCESS TOKEN TYPE:", type(access_token))
-    print("ACCESS TOKEN VALUE:", access_token)
-    
-    tokens = session.get('access_tokens')
-    print("EXISTING SESSION TOKENS:", tokens, type(tokens))
-    
-    if not isinstance(tokens, list):
-        tokens = []
-    tokens.append(access_token)
+    access_token, _ = plaid.exchange_public_token(public_token)
+
+    tokens = _get_tokens()
+    if access_token not in tokens:
+        tokens.append(access_token)
     session['access_tokens'] = tokens
     session.modified = True
     
@@ -238,7 +245,7 @@ def exchange_public_token():
 
 @app.route('/api/plaid/remove-item', methods=['POST'])
 def remove_plaid_item():
-    tokens = session.get('access_tokens', [])
+    tokens = _get_tokens()
     if not tokens:
         return jsonify({'error': 'Not authenticated'}), 401
     for token in tokens:
@@ -251,7 +258,7 @@ def remove_plaid_item():
 
 @app.route('/api/accounts', methods=['GET'])
 def get_accounts():
-    tokens = session.get('access_tokens', [])
+    tokens = _get_tokens()
     if not tokens:
         return jsonify({'error': 'Not connected'}), 401
     
@@ -295,7 +302,7 @@ def get_accounts():
 
 @app.route('/api/transactions', methods=['GET'])
 def get_transactions():
-    tokens = session.get('access_tokens', [])
+    tokens = _get_tokens()
     if not tokens:
         return jsonify({'error': 'Not connected'}), 401
     try:
@@ -315,7 +322,7 @@ def get_transactions():
 
 @app.route('/api/summary', methods=['GET'])
 def get_summary():
-    tokens = session.get('access_tokens', [])
+    tokens = _get_tokens()
     if not tokens:
         return jsonify({'error': 'Not connected'}), 401
     try:
@@ -621,9 +628,39 @@ Return ONLY a JSON array of tip strings, e.g. ["Tip one.", "Tip two."]"""
         print('gemini simulate-tips error', e)
         return jsonify({'error': 'Gemini request failed'}), 500
 
+@app.route('/api/gemini/predict-future', methods=['POST'])
+def predict_future():
+    err = _require_gemini()
+    if err: return err
+    data        = request.json or {}
+    advance_time = data.get('advanceTime', 2)
+    ncua_data   = _fetch_ncua_rates()
+    prompt = f"""You are an economic forecasting model. Using the NCUA credit union and bank rate data below, predict economic conditions {advance_time} year(s) from now.
+
+NCUA rate data (latest): {json.dumps(ncua_data.get('latest', {}))}
+Historical series: {json.dumps(ncua_data.get('series', [])[-4:])}
+
+Return ONLY valid JSON with exactly these three fields:
+{{ "inflationRate": <float 0-0.15>, "marketRate": <float 0-0.20>, "recessionProbability": <float 0-1> }}
+
+Base your estimates on the interest rate trend. Higher and rising rates → higher recession probability and lower market returns."""
+    try:
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                response_mime_type='application/json',
+                temperature=0.2,
+            ),
+        )
+        return jsonify(json.loads(response.text))
+    except Exception as e:
+        print('predict-future error', e)
+        return jsonify({'inflationRate': 0.03, 'marketRate': 0.06, 'recessionProbability': 0.2})
+
 @app.route('/api/health/tree-data', methods=['GET'])
 def tree_data():
-    tokens = session.get('access_tokens', [])
+    tokens = _get_tokens()
     if not tokens:
         return jsonify({'error': 'Not connected'}), 401
     try:
@@ -861,7 +898,7 @@ def tree_data():
 
 @app.route('/api/plaid/dictionary-context', methods=['GET'])
 def dictionary_context():
-    tokens = session.get('access_tokens', [])
+    tokens = _get_tokens()
     if not tokens:
         return jsonify({'error': 'Not connected'}), 401
     try:

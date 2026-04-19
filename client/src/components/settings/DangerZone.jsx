@@ -40,7 +40,7 @@ export default function DangerZone({ onDisconnected }) {
           }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, margin: '0 0 12px' }}>Delete Account</h3>
             <p style={{ fontSize: 13, color: 'var(--fg-2)', lineHeight: 1.6, margin: '0 0 20px' }}>
-              To delete your account, please contact us at <strong>support@finlit.app</strong>. We'll process your request within 48 hours.
+              To delete your account, please contact us at <strong>support@fire.app</strong>. We'll process your request within 48 hours.
             </p>
             <button onClick={() => setShowDeleteModal(false)} style={{
               padding: '10px 20px', background: 'var(--primary)', color: 'var(--fg-inverse)',

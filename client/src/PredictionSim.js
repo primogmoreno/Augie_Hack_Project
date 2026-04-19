@@ -366,83 +366,44 @@ async function forecastEconomy() {
     sessionStorage.setItem('economyState', JSON.stringify(economyState));
 }
 
+const _FLASK_BASE = 'http://localhost:5000/api';
+
+// Use Gemini via Flask to predict economic conditions — keeps API key server-side
 async function generateFuturePrediction(years) {
-    const validRates = Array.isArray(ncuaData)
-        ? ncuaData.filter(item => typeof item.cu_rate === 'number' && !isNaN(item.cu_rate))
-        : [];
-    const avgCuRate = validRates.length
-        ? validRates.reduce((sum, item) => sum + item.cu_rate, 0) / validRates.length
-        : 0.05;
-
-    const previousInflation = economyState.inflationRate || 0.02;
-    const previousMarket = economyState.marketReturn || 0.05;
-
-    const targetInflation = 0.02 + (avgCuRate - 0.05) * 0.15 + years * 0.005;
-    const targetMarket = 0.05 + (avgCuRate - 0.05) * 0.2 + years * 0.005;
-
-    const jitter = () => (Math.random() - 0.5) * 0.02;
-
-    const inflationRate = Math.max(
-        0.01,
-        Math.min(
-            0.10,
-            previousInflation + (targetInflation - previousInflation) * 0.4 + jitter()
-        )
-    );
-
-    const marketRate = Math.max(
-        0.01,
-        Math.min(
-            0.12,
-            previousMarket + (targetMarket - previousMarket) * 0.4 + jitter()
-        )
-    );
-
-    const recessionProbability = Math.max(
-        0,
-        Math.min(
-            1,
-            0.12 + (0.05 - avgCuRate) * 1.5 + years * 0.01 + (Math.random() - 0.5) * 0.05
-        )
-    );
-
-    return {
-        inflationRate,
-        marketRate,
-        recessionProbability
-    };
+    try {
+        const res = await fetch(`${_FLASK_BASE}/gemini/predict-future`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ advanceTime: years }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+    } catch (err) {
+        console.warn('Gemini prediction failed, using fallback math:', err);
+        // Fallback: simple math model if Flask is unreachable
+        const jitter = () => (Math.random() - 0.5) * 0.02;
+        return {
+            inflationRate: Math.max(0.01, Math.min(0.10, 0.03 + years * 0.003 + jitter())),
+            marketRate:    Math.max(0.01, Math.min(0.12, 0.06 + years * 0.002 + jitter())),
+            recessionProbability: Math.max(0, Math.min(1, 0.15 + years * 0.01 + jitter())),
+        };
+    }
 }
 
+// Fetch NCUA data from Flask (server already caches it for 24h)
 async function initNCUAData() {
-    const targetUrl = "https://ncua.gov/analysis/cuso-economic-data/credit-union-bank-rates";
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-
     try {
-        const response = await fetch(proxyUrl);
-        const json = await response.json();
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(json.contents, 'text/html');
-        const rows = Array.from(doc.querySelectorAll('table tr'));
-
-        const parsedData = rows.map(row => {
-            const cells = row.querySelectorAll('td');
-            return {
-                product: cells[0]?.innerText.trim(),
-                cu_rate: parseFloat(cells[1]?.innerText),
-                bank_rate: parseFloat(cells[2]?.innerText)
-            };
-        }).filter(item => item.product && !isNaN(item.cu_rate));
-
-        return parsedData;
+        const res = await fetch(`${_FLASK_BASE}/rates`, { credentials: 'include' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
     } catch (err) {
-        console.error("Failed to fetch NCUA data:", err);
+        console.warn('NCUA fetch failed:', err);
         return null;
     }
 }
 
 async function initAppData() {
-    // Use the live fetch logic from before, but save it to the buffer
-    ncuaData = await initNCUAData(); 
+    ncuaData = await initNCUAData();
 }
 

@@ -8,6 +8,7 @@ const NAV_MAIN = [
   { id: '/analyze',      label: 'Analyze',            icon: ICONS.zap },
   { id: '/world',        label: 'My Financial World', icon: ICONS.tree },
   { id: '/simulate',     label: 'Simulation',         icon: ICONS.sliders },
+  { id: '/lifesim',      label: 'Life Simulator',     icon: ICONS.repeat },
   { id: '/coach',        label: 'Coach',              icon: ICONS.coach },
 ];
 
@@ -79,7 +80,7 @@ export default function Sidebar() {
             color: 'var(--fg-1)',
             lineHeight: 1.1,
           }}>
-            FinLit
+            F.I.R.E
           </div>
           <div style={{
             fontFamily: 'var(--font-sans)',

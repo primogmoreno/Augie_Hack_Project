@@ -74,7 +74,7 @@ async function fetchAndCacheRates() {
   try {
     const response = await axios.get(NCUA_URL, {
       timeout: 8000,
-      headers: { 'User-Agent': 'FinLit/1.0 (HackAugie 2026)' },
+      headers: { 'User-Agent': 'F.I.R.E/1.0 (HackAugie 2026)' },
     });
 
     const series = parseNcuaHtml(response.data);

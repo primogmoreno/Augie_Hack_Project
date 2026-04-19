@@ -2,7 +2,7 @@ export const TOUR_STEPS = [
   {
     id: 'welcome',
     target: '[data-tour="nav-dashboard"]',
-    title: 'Welcome to FinLit',
+    title: 'Welcome to F.I.R.E',
     body: 'This is your financial command center. Let us take you on a quick tour of what\'s here.',
     primaryAction: 'Start tour',
     secondaryAction: 'Skip',

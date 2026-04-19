@@ -139,7 +139,7 @@ function Login() {
       <div style={styles.leftPanel}>
         <div style={styles.leftContent}>
           <Logo size={64} style={{ marginBottom: 24, color: "var(--fg-inverse, #faf9f5)" }} />
-          <h1 style={styles.heroTitle}>Welcome to FinLit</h1>
+          <h1 style={styles.heroTitle}>Welcome to F.I.R.E</h1>
           <p style={styles.heroText}>
             Designed to help teach the everyday person financial literacy while also allowing them to view and analyze their personal finances in one spot.
           </p>
@@ -155,7 +155,7 @@ function Login() {
               {/* Header */}
               <div style={styles.header}>
                 <Logo size={48} />
-                <h2 style={styles.title}>FinLit</h2>
+                <h2 style={styles.title}>F.I.R.E</h2>
                 <Badge tone="primary">Welcome</Badge>
               </div>
 

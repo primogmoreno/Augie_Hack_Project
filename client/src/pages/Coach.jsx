@@ -28,7 +28,7 @@ async function fetchAccountSummary() {
  */
 const INITIAL_MESSAGE = {
   role: 'ai',
-  text: "Hi — I'm your FinLit coach, powered by Gemini. I can explain anything on your statement, walk you through tough money decisions, or help you prep for a call with your credit union.",
+  text: "Hi — I'm your F.I.R.E coach, powered by Gemini. I can explain anything on your statement, walk you through tough money decisions, or help you prep for a call with your credit union.",
   suggestions: ['Why did my score drop?', 'Help me build an emergency fund', 'Explain my April statement'],
 };
 

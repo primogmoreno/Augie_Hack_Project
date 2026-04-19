@@ -35,7 +35,7 @@ export default function Home() {
               Let's make sense of your money.
             </h1>
             <p style={{ fontSize: 17, color: 'var(--fg-2)', lineHeight: 1.55, margin: '0 0 28px' }}>
-              Connect your bank and FinLit will translate your statements into plain English — so you can walk into your credit union knowing exactly what to ask.
+              Connect your bank and F.I.R.E will translate your statements into plain English — so you can walk into your credit union knowing exactly what to ask.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 32 }}>
               <Button variant="primary" size="lg" onClick={() => setStep('picking')}>

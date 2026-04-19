@@ -81,14 +81,14 @@ export function computeArchetype(literacyScore) {
     treeStage: 'Mature tree',
     treeState: 'mature',
     treeColor: '#173124',
-    description: 'You are well-informed across most areas. FinLit will help you go from awareness to mastery.',
+    description: 'You are well-informed across most areas. F.I.R.E will help you go from awareness to mastery.',
   };
   return {
     archetype: 'Strong foundation',
     treeStage: 'Thriving tree',
     treeState: 'thriving',
     treeColor: '#173124',
-    description: 'You have strong financial knowledge. FinLit will help you optimize and go deeper.',
+    description: 'You have strong financial knowledge. F.I.R.E will help you optimize and go deeper.',
   };
 }
 

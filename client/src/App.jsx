@@ -6,6 +6,7 @@ import Coach from './pages/Coach';
 import Dictionary from './pages/Dictionary';
 import TransactionHistory from './pages/TransactionHistory';
 import Simulation from './pages/Simulation';
+import LifeSimulator from './pages/LifeSimulator';
 import Analyze from './pages/Analyze';
 import FinancialWorld from './pages/FinancialWorld';
 import {Login,Logout} from './pages/Login';
@@ -37,6 +38,7 @@ function Layout() {
           
           <Route path="/transactions" element={<TransactionHistory />} />
           <Route path="/simulate"     element={<Simulation />} />
+          <Route path="/lifesim"      element={<LifeSimulator />} />
           <Route path="/analyze"      element={<Analyze />} />
           <Route path="/world"        element={<FinancialWorld />} />
           <Route path="/coach"        element={<Coach />} />

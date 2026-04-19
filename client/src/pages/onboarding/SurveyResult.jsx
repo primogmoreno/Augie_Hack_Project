@@ -52,8 +52,8 @@ export default function SurveyResult({ answers, onSubmit, submitting, submitErro
             : payload.archetype === 'Financially aware'
             ? 'You have solid foundations. A few targeted areas will accelerate your growth.'
             : payload.archetype === 'Well informed'
-            ? 'You are well-informed across most areas. FinLit will help you go from awareness to mastery.'
-            : 'You have strong financial knowledge. FinLit will help you optimize and go deeper.'}
+            ? 'You are well-informed across most areas. F.I.R.E will help you go from awareness to mastery.'
+            : 'You have strong financial knowledge. F.I.R.E will help you optimize and go deeper.'}
         </p>
         <div style={{ fontSize: 13, color: 'var(--fg-3)', fontStyle: 'italic' }}>
           Tree stage: {treeStage}

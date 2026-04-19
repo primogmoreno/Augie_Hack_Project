@@ -30,7 +30,7 @@ export default function SurveyShell({ questionIndex, totalQuestions, children })
             fontWeight: 500,
             color: 'var(--fg-1)',
           }}>
-            FinLit
+            F.I.R.E
           </span>
         </div>
 

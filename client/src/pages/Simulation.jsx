@@ -111,6 +111,8 @@ export default function Simulation() {
   const [tips, setTips] = useState([]);
   const [tipsLoading, setTipsLoading] = useState(false);
   const [plaidLoading, setPlaidLoading] = useState(false);
+  const [forecast, setForecast] = useState(null);
+  const [forecastLoading, setForecastLoading] = useState(false);
 
   const set = (key) => (val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -160,6 +162,18 @@ export default function Simulation() {
       console.error('Failed to auto-fill from Plaid', err);
     } finally {
       setPlaidLoading(false);
+    }
+  };
+
+  const handleForecast = async (years) => {
+    setForecastLoading(true);
+    try {
+      const { data } = await api.post('/gemini/predict-future', { advanceTime: years });
+      setForecast({ years, ...data });
+    } catch {
+      setForecast(null);
+    } finally {
+      setForecastLoading(false);
     }
   };
 
@@ -437,6 +451,47 @@ export default function Simulation() {
                 )}
               </div>
             </div>
+          </Card>
+
+          <Card style={{ padding: '20px 24px' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', marginBottom: 12 }}>
+              Economic Forecast · Powered by Gemini
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+              {[1, 2, 5, 10].map(y => (
+                <button key={y} onClick={() => handleForecast(y)} disabled={forecastLoading} style={{
+                  padding: '6px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-1)',
+                  background: forecast?.years === y ? 'var(--primary)' : 'var(--surface-low)',
+                  color: forecast?.years === y ? '#fff' : 'var(--fg-1)',
+                  fontSize: 13, fontWeight: 600, cursor: forecastLoading ? 'wait' : 'pointer',
+                }}>
+                  {y} yr{y > 1 ? 's' : ''}
+                </button>
+              ))}
+            </div>
+            {forecastLoading && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--fg-3)', fontSize: 14 }}>
+                <div style={{ width: 16, height: 16, border: '2px solid var(--primary-muted)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                Generating forecast…
+              </div>
+            )}
+            {!forecastLoading && forecast && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+                {[
+                  { label: 'Inflation Rate', value: (forecast.inflationRate * 100).toFixed(1) + '%' },
+                  { label: 'Market Return', value: (forecast.marketRate * 100).toFixed(1) + '%' },
+                  { label: 'Recession Risk', value: (forecast.recessionProbability * 100).toFixed(0) + '%' },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{ background: 'var(--surface-low)', borderRadius: 'var(--radius-md)', padding: '12px 16px' }}>
+                    <div style={{ fontSize: 11, color: 'var(--fg-3)', marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--fg-1)' }}>{value}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!forecastLoading && !forecast && (
+              <div style={{ fontSize: 13, color: 'var(--fg-3)' }}>Select a time horizon above to generate a forecast.</div>
+            )}
           </Card>
 
           <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--fg-3)' }}>

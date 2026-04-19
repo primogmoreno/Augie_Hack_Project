@@ -3,7 +3,7 @@ import { TERMS } from '../data/dictionaryTerms';
 import useAuth from '../services/useAuth';
 import { recordDictionaryTermsRead } from '../firebase/literacyService';
 
-const STORAGE_KEY = 'finlit_dictionary_read';
+const STORAGE_KEY = 'fire_dictionary_read';
 
 export function useDictionaryProgress(onMilestoneUnlock) {
   const { user } = useAuth();
