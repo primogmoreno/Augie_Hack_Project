@@ -67,12 +67,6 @@ function Login() {
       if (token) {
         sessionStorage.setItem("google_access_token", token);
       }
-      /* 
-      if (!result.user.email.endsWith("@augustana.edu")) {
-        await signOut(auth);
-        alert("Please use your Augustana school email to sign in.");
-        return;
-      } */
 
       const emailKey = result.user.email.toLowerCase();
       const snap = await getDocs(collection(database, "users"));
@@ -141,78 +135,92 @@ function Login() {
 
   return (
     <div style={styles.page}>
-      {/* ── Sign-in card ── */}
-      {!user && (
-        <div style={styles.cardWrap}>
-          <Card style={styles.card}>
-            {/* Header */}
-            <div style={styles.header}>
-              <Logo size={48} />
-              <h1 style={styles.title}>FinLit</h1>
-              <Badge tone="primary">Augustana Portal</Badge>
-            </div>
-
-            <p style={styles.subtitle}>
-              Sign in with your Google account to access your financial
-              dashboard and coaching tools.
-            </p>
-
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleSignIn}
-              style={{ width: "100%", justifyContent: "center" }}
-            >
-              <Icon d={ICONS.send} size={16} />
-              Sign in with Google
-            </Button>
-
-            <p style={styles.hint}>
-              <Icon d={ICONS.lock} size={13} stroke={2} />
-              Your information is secure and will not be shared with third
-              parties.
-            </p>
-          </Card>
+      {/* ── Left Panel: Information & Welcoming ── */}
+      <div style={styles.leftPanel}>
+        <div style={styles.leftContent}>
+          <Logo size={64} style={{ marginBottom: 24, color: "var(--fg-inverse, #faf9f5)" }} />
+          <h1 style={styles.heroTitle}>Welcome to FinLit</h1>
+          <p style={styles.heroText}>
+            Designed to help teach the everyday person financial literacy while also allowing them to view and analyze their personal finances in one spot.
+          </p>
         </div>
-      )}
+      </div>
 
-      {/* ── Registration card ── */}
-      {user && !isRegistered && (
-        <div style={styles.cardWrap}>
-          <Card style={styles.card}>
-            <div style={styles.header}>
-              <Logo size={48} />
-              <h1 style={styles.title}>Complete Registration</h1>
-              <Badge tone="info">New Account</Badge>
-            </div>
+      {/* ── Right Panel: Action ── */}
+      <div style={styles.rightPanel}>
+        {/* ── Sign-in card ── */}
+        {!user && (
+          <div style={styles.cardWrap}>
+            <Card style={styles.card}>
+              {/* Header */}
+              <div style={styles.header}>
+                <Logo size={48} />
+                <h2 style={styles.title}>FinLit</h2>
+                <Badge tone="primary">Welcome</Badge>
+              </div>
 
-            <p style={styles.subtitle}>
-              Welcome, <strong>{user.displayName}</strong>! Add your phone
-              number to finish setting up your account.
-            </p>
+              <p style={styles.subtitle}>
+                Sign in with your Google account to access your financial
+                dashboard and coaching tools.
+              </p>
 
-            <input
-              type="tel"
-              placeholder="000-000-0000"
-              value={phoneNumber}
-              onChange={(e) =>
-                setPhoneNumber(formatPhoneNumber(e.target.value))
-              }
-              style={styles.input}
-            />
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleSignIn}
+                style={{ width: "100%", justifyContent: "center" }}
+              >
+                <Icon d={ICONS.send} size={16} />
+                Sign in with Google
+              </Button>
 
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleRegister}
-              style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
-            >
-              <Icon d={ICONS.check} size={16} />
-              Complete Registration
-            </Button>
-          </Card>
-        </div>
-      )}
+              <p style={styles.hint}>
+                <Icon d={ICONS.lock} size={13} stroke={2} />
+                Your information is secure and will not be shared with third
+                parties.
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {/* ── Registration card ── */}
+        {user && !isRegistered && (
+          <div style={styles.cardWrap}>
+            <Card style={styles.card}>
+              <div style={styles.header}>
+                <Logo size={48} />
+                <h2 style={styles.title}>Complete Registration</h2>
+                <Badge tone="info">New Account</Badge>
+              </div>
+
+              <p style={styles.subtitle}>
+                Welcome, <strong>{user.displayName}</strong>! Add your phone
+                number to finish setting up your account.
+              </p>
+
+              <input
+                type="tel"
+                placeholder="000-000-0000"
+                value={phoneNumber}
+                onChange={(e) =>
+                  setPhoneNumber(formatPhoneNumber(e.target.value))
+                }
+                style={styles.input}
+              />
+
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleRegister}
+                style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
+              >
+                <Icon d={ICONS.check} size={16} />
+                Complete Registration
+              </Button>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -222,10 +230,51 @@ const styles = {
   page: {
     minHeight: "100vh",
     display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    background: "var(--bg-page, #F5F5F0)",
+  },
+  leftPanel: {
+    flex: "1 1 50%",
+    minWidth: 320,
+    background: "var(--primary, #173124)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    padding: "40px 10%",
+    boxSizing: "border-box",
+    position: "relative",
+    overflow: "hidden",
+  },
+  leftContent: {
+    maxWidth: 480,
+    position: "relative",
+    zIndex: 1,
+  },
+  heroTitle: {
+    fontFamily: "var(--font-display, Georgia, serif)",
+    fontSize: 48,
+    fontWeight: 500,
+    color: "var(--fg-inverse, #faf9f5)",
+    marginBottom: 16,
+    letterSpacing: "-0.02em",
+    lineHeight: 1.1,
+  },
+  heroText: {
+    fontFamily: "var(--font-sans, sans-serif)",
+    fontSize: 18,
+    color: "var(--fg-inverse, #faf9f5)",
+    opacity: 0.9,
+    lineHeight: 1.6,
+  },
+  rightPanel: {
+    flex: "1 1 50%",
+    minWidth: 320,
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "var(--bg, #F5F5F0)",
     padding: 24,
+    boxSizing: "border-box",
   },
   cardWrap: {
     width: "100%",
@@ -270,12 +319,12 @@ const styles = {
     width: "100%",
     padding: "10px 14px",
     fontSize: 15,
-    border: "1px solid var(--ink-200, #ddd)",
+    border: "1px solid var(--border-2, #ddd)",
     borderRadius: 10,
     outline: "none",
     fontFamily: "inherit",
     boxSizing: "border-box",
-    background: "var(--bg, #fff)",
+    background: "var(--bg-surface, #fff)",
     color: "var(--fg-1, #1a1a1a)",
   },
   centered: {
@@ -285,7 +334,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    background: "var(--bg, #F5F5F0)",
+    background: "var(--bg-page, #F5F5F0)",
   },
   signingOut: {
     fontSize: 15,
