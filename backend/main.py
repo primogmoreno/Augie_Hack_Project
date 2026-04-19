@@ -5,7 +5,9 @@ from google import genai
 from google.genai import types as genai_types
 import os
 import json
-from datetime import date, datetime
+import time
+import urllib.request
+from datetime import date, datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,6 +21,8 @@ plaid = PlaidClient()
 _gemini_key = os.getenv("GEMINI_API_KEY")
 gemini_client = genai.Client(api_key=_gemini_key) if _gemini_key else None
 
+# ── Serialization ──────────────────────────────────────────────────────────────
+
 def _serialize(obj):
     """Recursively convert Plaid SDK objects and dates to JSON-safe types."""
     if hasattr(obj, 'to_dict'):
@@ -31,10 +35,180 @@ def _serialize(obj):
         return obj.isoformat()
     return obj
 
+# ── Transaction enrichment ─────────────────────────────────────────────────────
+
+CATEGORY_ICONS = {
+    'Food & Dining':      '🍽', 'Shopping':            '🛍', 'Transport':  '🚗',
+    'Entertainment':      '🎬', 'Utilities':            '⚡', 'Income':     '💰',
+    'Healthcare':         '🏥', 'Savings & Investing':  '🏦', 'Other':      '📦',
+}
+
+CATEGORY_COLORS = {
+    'Food & Dining':       {'primary': '#185FA5', 'light': '#E6F1FB'},
+    'Shopping':            {'primary': '#639922', 'light': '#EAF3DE'},
+    'Transport':           {'primary': '#BA7517', 'light': '#FAEEDA'},
+    'Entertainment':       {'primary': '#533AB7', 'light': '#EEEDFE'},
+    'Utilities':           {'primary': '#5F5E5A', 'light': '#F1EFE8'},
+    'Income':              {'primary': '#3B6D11', 'light': '#EAF3DE'},
+    'Healthcare':          {'primary': '#993556', 'light': '#FBEAF0'},
+    'Savings & Investing': {'primary': '#1F7A6B', 'light': '#EAF5F3'},
+    'Other':               {'primary': '#888780', 'light': '#F1EFE8'},
+}
+
+# Merchant name keywords that reliably indicate savings/investing regardless of PFC
+_SAVINGS_KEYWORDS = [
+    'CD DEPOSIT', 'CERTIFICATE OF DEPOSIT', 'SAVINGS DEPOSIT', 'SAVINGS TRANSFER',
+    'INVEST', 'VANGUARD', 'FIDELITY', 'SCHWAB', 'ROBINHOOD', 'E*TRADE', 'ETRADE',
+    'MERRILL', 'BETTERMENT', 'WEALTHFRONT', '401K', 'IRA DEPOSIT', 'ROTH',
+    'MONEY MARKET', 'MUTUAL FUND', 'BROKERAGE', 'TD AMERITRADE', 'ACORNS',
+]
+
+def _normalize_cat_pfc(pfc_primary):
+    """Map Plaid personal_finance_category.primary (uppercase) to our categories."""
+    p = (pfc_primary or '').upper()
+    if any(k in p for k in ['FOOD', 'RESTAURANT', 'GROCER', 'COFFEE', 'DINING']):
+        return 'Food & Dining'
+    if any(k in p for k in ['TRANSPORT', 'TRAVEL', 'GAS_STATION', 'TAXI', 'PARKING']):
+        return 'Transport'
+    if any(k in p for k in ['GENERAL_MERCHANDISE', 'SHOP', 'RETAIL', 'CLOTHE', 'SPORTING_GOODS']):
+        return 'Shopping'
+    if any(k in p for k in ['ENTERTAINMENT', 'RECREATION', 'STREAMING', 'SPORT_AND_FITNESS']):
+        return 'Entertainment'
+    if any(k in p for k in ['UTILITIES', 'RENT_AND_UTILITIES', 'PHONE', 'INTERNET', 'ELECTRIC']):
+        return 'Utilities'
+    if any(k in p for k in ['INCOME', 'PAYROLL', 'TRANSFER_IN']):
+        return 'Income'
+    if any(k in p for k in ['MEDICAL', 'HEALTHCARE', 'PHARMACY', 'DOCTOR', 'DENTAL']):
+        return 'Healthcare'
+    if any(k in p for k in ['TRANSFER_OUT', 'SAVINGS', 'INVESTMENT', 'LOAN_PAYMENT']):
+        return 'Savings & Investing'
+    return 'Other'
+
+def _normalize_cat_legacy(cats):
+    """Map legacy Plaid category array to our categories."""
+    if not cats:
+        return 'Other'
+    primary   = (cats[0] if cats else '').lower()
+    secondary = (cats[1] if len(cats) > 1 else '').lower()
+    if 'food' in primary or 'restaurant' in primary or 'groceries' in secondary or 'coffee' in secondary:
+        return 'Food & Dining'
+    if 'travel' in primary or 'gas' in secondary or 'uber' in secondary or 'lyft' in secondary or 'taxi' in secondary or 'transport' in primary:
+        return 'Transport'
+    if 'shops' in primary or 'shopping' in primary or 'amazon' in secondary or 'walmart' in secondary or 'target' in secondary:
+        return 'Shopping'
+    if 'recreation' in primary or 'entertainment' in primary or 'netflix' in secondary or 'spotify' in secondary or 'hulu' in secondary:
+        return 'Entertainment'
+    if 'utilities' in primary or 'electric' in secondary or 'internet' in secondary or 'phone' in secondary or 'energy' in secondary:
+        return 'Utilities'
+    if 'transfer' in primary or 'deposit' in primary or 'payroll' in primary or 'income' in primary:
+        return 'Income'
+    if 'healthcare' in primary or 'medical' in primary or 'pharmacy' in primary:
+        return 'Healthcare'
+    return 'Other'
+
+def _normalize_tx(t):
+    pfc = t.get('personal_finance_category') or {}
+    pfc_primary = pfc.get('primary') if isinstance(pfc, dict) else None
+    cat = _normalize_cat_pfc(pfc_primary) if pfc_primary else _normalize_cat_legacy(t.get('category') or [])
+
+    # Name-based override — merchant name is the most reliable signal for savings/investing
+    name_upper = ((t.get('merchant_name') or t.get('name', ''))).upper()
+    if any(k in name_upper for k in _SAVINGS_KEYWORDS):
+        cat = 'Savings & Investing'
+    amount = t.get('amount', 0)
+    tx_type = 'debit' if amount > 0 else 'credit'
+    d = t.get('date', '')
+    try:
+        date_obj = datetime.strptime(d, '%Y-%m-%d')
+        date_formatted = date_obj.strftime('%b') + ' ' + str(date_obj.day)
+    except Exception:
+        date_formatted = d
+    return {
+        'id':             t.get('transaction_id'),
+        'merchant':       t.get('merchant_name') or t.get('name', ''),
+        'date':           d,
+        'date_formatted': date_formatted,
+        'amount':         amount,
+        'amount_display': f"${abs(amount):.2f}",
+        'category':       cat,
+        'type':           tx_type,
+        'is_recurring':   False,
+        'merchant_icon':  CATEGORY_ICONS.get(cat, '📦'),
+        'pending':        t.get('pending', False),
+    }
+
+def _detect_recurring(transactions):
+    by_merchant = {}
+    for tx in transactions:
+        key = (tx.get('merchant') or '').lower().strip()
+        by_merchant.setdefault(key, []).append(tx)
+    recurring = set()
+    for key, txs in by_merchant.items():
+        if len(txs) < 2 or any(t['type'] == 'credit' for t in txs):
+            continue
+        amounts = [t['amount'] for t in txs]
+        avg = sum(amounts) / len(amounts)
+        if avg and all(abs(a - avg) / avg < 0.05 for a in amounts):
+            recurring.add(key)
+    return [{**tx, 'is_recurring': (tx.get('merchant') or '').lower().strip() in recurring} for tx in transactions]
+
+def _bucket_by_week(transactions):
+    weeks = {}
+    for tx in transactions:
+        if tx.get('type') != 'debit':
+            continue
+        try:
+            d = datetime.strptime(tx['date'], '%Y-%m-%d')
+        except Exception:
+            continue
+        monday = d - timedelta(days=d.weekday())
+        iso_key = monday.strftime('%Y-%m-%d')
+        weeks[iso_key] = round(weeks.get(iso_key, 0) + abs(tx['amount']), 2)
+    result = []
+    for iso_key in sorted(weeks):
+        mo = datetime.strptime(iso_key, '%Y-%m-%d')
+        result.append({'week': mo.strftime('%b') + ' ' + str(mo.day), 'total': weeks[iso_key]})
+    return result
+
+def _fetch_transactions_normalized(access_token, days=90):
+    start = date.today() - timedelta(days=days)
+    last_err = None
+    for attempt in range(4):
+        try:
+            raw = plaid.get_transactions(access_token, start_date=start)
+            return _detect_recurring([_normalize_tx(_serialize(t)) for t in raw])
+        except Exception as e:
+            last_err = e
+            if 'PRODUCT_NOT_READY' in str(e) and attempt < 3:
+                time.sleep(1.5)
+                continue
+            raise last_err
+
+# ── FRED savings rate (24 h cache) ────────────────────────────────────────────
+
+_fred_cache = {'rate': 3.8, 'ts': 0}
+
+def _get_national_savings_rate():
+    if time.time() - _fred_cache['ts'] < 86400:
+        return _fred_cache['rate']
+    try:
+        url = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=PSAVERT'
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            text = resp.read().decode()
+        value = float(text.strip().split('\n')[-1].split(',')[1])
+        _fred_cache.update({'rate': value, 'ts': time.time()})
+        return value
+    except Exception:
+        return 3.8
+
 @app.route("/api/create_link_token", methods=["POST"])
 def create_link_token():
-    token = plaid.create_link_token(user_id="user-123")
-    return jsonify({"link_token": token})
+    try:
+        token = plaid.create_link_token(user_id="user-123")
+        return jsonify({"link_token": token})
+    except Exception as e:
+        print('create_link_token error', e)
+        return jsonify({'error': str(e)}), 500
 
 @app.route("/api/exchange_public_token", methods=["POST"])
 def exchange_public_token():
@@ -66,14 +240,67 @@ def get_transactions():
     if not access_token:
         return jsonify({'error': 'Not connected'}), 401
     try:
-        transactions = plaid.get_transactions(access_token)
-        return jsonify({'transactions': _serialize(transactions)})
+        days = int(request.args.get('days', 90))
+        transactions = _fetch_transactions_normalized(access_token, days)
+        return jsonify({'transactions': transactions})
     except Exception as e:
-        err_str = str(e)
-        if 'PRODUCT_NOT_READY' in err_str:
+        if 'PRODUCT_NOT_READY' in str(e):
             return jsonify({'transactions': [], 'pending': True}), 200
         print('transactions error', e)
         return jsonify({'error': 'Failed to fetch transactions'}), 500
+
+@app.route('/api/summary', methods=['GET'])
+def get_summary():
+    access_token = session.get('access_token')
+    if not access_token:
+        return jsonify({'error': 'Not connected'}), 401
+    try:
+        days = int(request.args.get('days', 90))
+        transactions = _fetch_transactions_normalized(access_token, days)
+
+        debits   = [t for t in transactions if t['type'] == 'debit']
+        credits  = [t for t in transactions if t['type'] == 'credit']
+        savings  = [t for t in debits if t['category'] == 'Savings & Investing']
+        spending = [t for t in debits if t['category'] != 'Savings & Investing']
+
+        total_spent      = round(sum(t['amount'] for t in spending), 2)
+        total_income     = round(abs(sum(t['amount'] for t in credits)), 2)
+        savings_invested = round(sum(t['amount'] for t in savings), 2)
+
+        recurring       = [t for t in spending if t['is_recurring']]
+        recurring_total = round(sum(t['amount'] for t in recurring), 2)
+        recurring_count = len({(t.get('merchant') or '').lower().strip() for t in recurring})
+
+        savings_rate = round((total_income - total_spent) / total_income * 100, 1) if total_income > 0 else 0
+
+        cat_sums = {}
+        for t in debits:
+            cat_sums[t['category']] = round(cat_sums.get(t['category'], 0) + t['amount'], 2)
+
+        category_totals = sorted(
+            [{'category': cat, 'total': total, 'color': CATEGORY_COLORS.get(cat, CATEGORY_COLORS['Other'])}
+             for cat, total in cat_sums.items()],
+            key=lambda x: x['total'], reverse=True
+        )
+
+        return jsonify({
+            'total_spent':           total_spent,
+            'total_income':          total_income,
+            'savings_invested':      savings_invested,
+            'recurring_total':       recurring_total,
+            'recurring_count':       recurring_count,
+            'savings_rate':          savings_rate,
+            'national_savings_rate': _get_national_savings_rate(),
+            'transaction_count':     len(transactions),
+            'period_days':           days,
+            'weekly_spending':       _bucket_by_week(transactions),
+            'category_totals':       category_totals,
+        })
+    except Exception as e:
+        if 'PRODUCT_NOT_READY' in str(e):
+            return jsonify({'pending': True}), 200
+        print('summary error', e)
+        return jsonify({'error': 'Failed to fetch summary'}), 500
 
 @app.route('/api/rates', methods=['GET'])
 def rates():

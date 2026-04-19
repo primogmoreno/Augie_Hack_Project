@@ -34,7 +34,8 @@ class PlaidClient:
         Serves as Step 1 in the Plaid flow. The flask app will call this endpoint to get a link token, which is then sent to the frontend.
         """
         request = LinkTokenCreateRequest(
-            products=[Products("transactions"), Products("liabilities")],
+            products=[Products("transactions")],
+            optional_products=[Products("liabilities")],
             client_name=client_name,
             country_codes=[CountryCode("US")],
             language="en",

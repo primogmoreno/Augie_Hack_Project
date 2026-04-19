@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "concurrently --names \"backend,client\" --prefix-colors \"blue,cyan\" \"yarn backend\" \"yarn workspace finlit-client dev\"",
-    "backend": ".\\venv\\Scripts\\python.exe .\\backend\\main.py",
+    "backend": "./venv/Scripts/python.exe ./backend/main.py",
     "install:all": "yarn install && pip install -r requirements.txt",
     "build": "yarn workspace finlit-client build"
   },

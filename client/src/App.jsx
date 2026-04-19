@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Coach from './pages/Coach';
 import JargonDecoder from './pages/JargonDecoder';
+import TransactionHistory from './pages/TransactionHistory';
 
 function Layout() {
   const location = useLocation();
@@ -18,10 +19,11 @@ function Layout() {
       <Sidebar />
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/coach"     element={<Coach />} />
-          <Route path="/jargon"    element={<JargonDecoder />} />
-          <Route path="/settings"  element={<SettingsPlaceholder />} />
+          <Route path="/dashboard"    element={<Dashboard />} />
+          <Route path="/transactions" element={<TransactionHistory />} />
+          <Route path="/coach"        element={<Coach />} />
+          <Route path="/jargon"       element={<JargonDecoder />} />
+          <Route path="/settings"     element={<SettingsPlaceholder />} />
         </Routes>
       </div>
     </div>
