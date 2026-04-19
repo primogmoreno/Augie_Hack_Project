@@ -84,7 +84,7 @@ randomLifeEvents = {
         name: "Retirement",
         description: "You have entered retirement, reducing your income."
      },
-     noMajorEvent: { weight: 0.3, impact: 0 }
+     noMajorEvent: { weight: 0.6, impact: 0 }
 }
 
 addEventListener('DOMContentLoaded', () => {
@@ -110,7 +110,16 @@ function startSimulation(){
     userState.income = Number(document.getElementById('income').value);
     userState.expenses = Number(document.getElementById('expensesInput').value);
     userState.investments = Number(document.getElementById('investmentsInput').value);
-    
+    userState.relationshipStatus = "single";
+    userState.hasJob = true;
+    userState.kids = 0;
+    userState.hasBusiness = false;
+
+    economyState.inflationRate = 0.02;
+    economyState.marketReturn = 0.05;
+    economyState.recession = false;
+
+
     sessionStorage.setItem('userState', JSON.stringify(userState));
     sessionStorage.setItem('economyState', JSON.stringify(economyState));
     window.location.href = "bitMoney.html";
@@ -149,9 +158,13 @@ function simulateYear() {
     }
     
     // Update economy state
+    const wasInRecession = economyState.recession;
     if (Math.random() < 0.1) {
         economyState.recession = !economyState.recession;
         economyState.marketReturn = economyState.recession ? -0.05 : 0.05;
+        if (economyState.recession !== wasInRecession) {
+            userState.income *= economyState.recession ? 0.9 : (1/0.9);
+        }
     }
 
     // Save state    
@@ -281,4 +294,8 @@ function displayCurrentData(){
     document.getElementById('relationshipStatus').innerText = userState.relationshipStatus;
     document.getElementById('kids').innerText = userState.kids;
     document.getElementById('businessStatus').innerText = userState.hasBusiness ? 'Has Business' : 'No Business';
+
+    document.getElementById('inflationRate').innerText = (economyState.inflationRate * 100).toFixed(2) + '%';
+    document.getElementById('marketReturn').innerText = (economyState.marketReturn * 100).toFixed(2) + '%';
+    document.getElementById('recession').innerText = economyState.recession ? 'Yes' : 'No';
 }
