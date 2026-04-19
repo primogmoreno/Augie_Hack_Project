@@ -178,5 +178,47 @@ function suggestions(){
     } catch(e) {
         return;
     }
-    //TODO: prompt gemini api for suggestions based on user data and CSV data comparison
+    const typicalBudgetData = {
+        needs: answers.monthlyIncome * 0.5, // needs
+        wants: answers.monthlyIncome * 0.3, // wants
+        savings: answers.monthlyIncome * 0.2  // savings
+    };
+    const userNeeds = ['housing', 'insurance', 'transportation', 'utilities', 'food'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    const userWants = ['entertainment', 'clothing', 'otherExpenses'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    const userSavings = ['monthlySavings', 'loans'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    await getAIGeneratedTips(answers, typicalBudgetData, userNeeds, userWants, userSavings);
+}
+async function getAIGeneratedTips(answers,typicalData, userNeeds, userWants, userSavings){
+
+   const tipsList = document.getElementById("tips-list"); // Ensure this ID matches your HTML
+    if (!tipsList) return;
+
+    tipsList.innerHTML = "<li>Loading suggestions...</li>";
+
+    // This is the prompt logic you'll send to your API/Gemini
+    const promptText = `Acting as a professional financial advisor... (your prompt logic here)`;
+
+    try {
+        const response = await fetch("/api/generate-tips", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                prompt: promptText, // Usually, you want to send the prompt string
+                userData: answers 
+            })
+        });
+
+        const data = await response.json();
+        if (data.advice) {
+        const lines = data.advice.split("\n").filter(line => line.trim() !== "");
+        tipsList.innerHTML = lines.map(line => `<li>${line.replace(/^[*-]\s*/, '')}</li>`).join("");
+    } else {
+        tipsList.innerHTML = "<li>No specific advice at this time.</li>";
+    }
+        
+       
+    } catch (error) {
+        console.error("Error generating AI tips:", error);
+        tipsList.innerHTML = "<li>Error generating suggestions.</li>";
+    }
 }

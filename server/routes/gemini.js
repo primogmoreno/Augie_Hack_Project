@@ -82,4 +82,45 @@ Rules:
   }
 });
 
+//Route for generating AI tips based on user data
+router.post("/generate-tips", async (req, res) => {
+    try {
+        const { userData, typicalData } = req.body;
+
+        // 1. Construct the prompt on the server for security
+        // Construct a structured prompt for 2.5-flash
+        const prompt = `
+            Context: Financial Simulation Results
+            User Income: $${userData.monthlyIncome}
+            
+            Current Spending vs Recommended (50/30/20):
+            - Needs: $${userData.userNeeds} (Goal: $${typicalData.needs})
+            - Wants: $${userData.userWants} (Goal: $${typicalData.wants})
+            - Savings: $${userData.userSavings} (Goal: $${typicalData.savings})
+
+            Task: Provide exactly 3 short, actionable financial tips based on the data above.
+            Constraints:
+            - Focus on the category with the largest overspend.
+            - Keep each tip under 15 words.
+            - Do not use markdown (no asterisks, no bolding).
+            - Return only the tips as a plain text list.
+        `;
+
+        // 2. Call the Gemini Model
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        
+        // 3. Send the result back to the frontend
+        res.json({ advice: text });
+
+    } catch (error) {
+        console.error("Gemini API Error:", error);
+        res.status(500).json({ error: "Failed to generate tips" });
+    }
+});
+
 module.exports = router;
+
+
