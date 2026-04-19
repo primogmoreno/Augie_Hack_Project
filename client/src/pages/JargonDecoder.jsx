@@ -47,7 +47,7 @@ export default function JargonDecoder() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <TopBar title="Jargon Decoder" subtitle="Paste any financial term and get a plain-English explanation." />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--ink-0)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)' }}>
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
 
           {/* Input card */}
@@ -64,8 +64,8 @@ export default function JargonDecoder() {
                 style={{
                   flex: 1,
                   padding: '12px 14px',
-                  border: '1px solid var(--ink-200)',
-                  borderRadius: 10,
+                  border: '1px solid var(--border-1)',
+                  borderRadius: 'var(--radius-md)',
                   fontSize: 15,
                   fontFamily: 'var(--font-sans)',
                   outline: 'none',
@@ -92,8 +92,8 @@ export default function JargonDecoder() {
                     marginRight: 6, marginBottom: 4,
                     padding: '4px 10px',
                     border: '1px solid var(--border-1)',
-                    borderRadius: 999,
-                    background: '#fff',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'var(--surface-low)',
                     fontSize: 12,
                     cursor: 'pointer',
                     color: 'var(--fg-2)',
@@ -122,7 +122,7 @@ export default function JargonDecoder() {
                 <Card key={i} style={{ padding: 22 }}>
                   <div style={{
                     fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em',
-                    color: i === 2 ? 'var(--teal-600)' : 'var(--amber-500)',
+                    color: i === 2 ? 'var(--primary)' : 'var(--accent)',
                     marginBottom: 8,
                   }}>
                     {i === 2 ? '✦ ' : ''}{SECTION_LABELS[i] ?? `Section ${i + 1}`}

@@ -140,14 +140,14 @@ export default function FinancialWorld() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 40px 60px', background: 'var(--ink-0)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 40px 60px', background: 'var(--bg-page)' }}>
 
         {/* ── NOT CONNECTED ─────────────────────────────────────────── */}
         {isConnected === false && data && (
           <div style={{ marginBottom: 20 }}>
             <Card style={{
-              background: 'linear-gradient(135deg, var(--teal-700) 0%, #0D5C52 100%)',
-              border: 'none', padding: '20px 28px',
+              background: 'var(--primary)',
+              padding: '20px 28px',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
               <div>
@@ -158,7 +158,7 @@ export default function FinancialWorld() {
                   This preview uses placeholder scores — your actual data will look different.
                 </div>
               </div>
-              <Button onClick={() => openPlaid?.()} style={{ background: '#fff', color: 'var(--teal-700)', fontWeight: 700, flexShrink: 0 }}>
+              <Button onClick={() => openPlaid?.()} style={{ background: 'var(--fg-inverse)', color: 'var(--primary)', fontWeight: 700, flexShrink: 0 }}>
                 <Icon d={ICONS.lock} size={14} /> Connect via Plaid
               </Button>
             </Card>
@@ -187,7 +187,7 @@ export default function FinancialWorld() {
             {/* Canvas + Pillars */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, marginBottom: 24 }}>
               {/* Tree Canvas */}
-              <Card style={{ padding: 0, overflow: 'hidden', height: 360, background: 'linear-gradient(180deg, #F0FAF6 0%, #E8F5EF 100%)' }}>
+              <Card style={{ padding: 0, overflow: 'hidden', height: 360, background: 'var(--surface-low)' }}>
                 <TreeCanvas healthData={data} animationTime={animTime} />
               </Card>
 

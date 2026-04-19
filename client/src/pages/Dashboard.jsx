@@ -21,10 +21,10 @@ const FALLBACK_TXS = [
 ];
 
 const PLACEHOLDER_BUDGET = [
-  { name: 'Food & Dining', color: '#185FA5', pct: 72 },
-  { name: 'Shopping',      color: '#639922', pct: 48 },
-  { name: 'Transport',     color: '#BA7517', pct: 28 },
-  { name: 'Entertainment', color: '#533AB7', pct: 18 },
+  { name: 'Food & Dining', color: '#173124', pct: 72 },
+  { name: 'Shopping',      color: '#2F8F5A', pct: 48 },
+  { name: 'Transport',     color: '#A8631A', pct: 28 },
+  { name: 'Entertainment', color: '#4f1b08', pct: 18 },
 ];
 
 function mapPlaidAccounts(accounts, liabilities) {
@@ -73,8 +73,8 @@ function buildInsights(summary, creditInfo) {
       label: 'Top spending category',
       value: top.category,
       detail: `$${top.total.toLocaleString('en-US', { minimumFractionDigits: 2 })} · ${pct}% of total`,
-      color: top.color?.primary ?? 'var(--teal-700)',
-      light: top.color?.light  ?? 'var(--teal-50)',
+      color: top.color?.primary ?? 'var(--primary)',
+      light: top.color?.light  ?? 'var(--primary-muted)',
     });
   }
 
@@ -124,8 +124,8 @@ function LockedOverlay({ message }) {
     }}>
       <div style={{
         width: 40, height: 40, borderRadius: '50%',
-        background: 'var(--teal-50)', border: '1px solid var(--teal-100)',
-        display: 'grid', placeItems: 'center', color: 'var(--teal-700)',
+        background: 'var(--primary-muted)', border: '1px solid var(--border-1)',
+        display: 'grid', placeItems: 'center', color: 'var(--primary)',
       }}>
         <Icon d={ICONS.lock} size={18} />
       </div>
@@ -239,13 +239,13 @@ console.log(user.displayName);
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--ink-0)', animation: 'fadeIn var(--dur-slow) var(--ease-out)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)', animation: 'fadeIn var(--dur-slow) var(--ease-out)' }}>
 
         {/* ── NOT CONNECTED: prominent CTA banner ──────────────────── */}
         {!loading && !connected && (
           <Card style={{
-            background: 'linear-gradient(135deg, var(--teal-700) 0%, #0D5C52 100%)',
-            border: 'none', padding: '32px 36px', marginBottom: 24,
+            background: 'var(--primary)',
+            padding: '32px 36px', marginBottom: 24,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
               <div style={{
@@ -268,7 +268,7 @@ console.log(user.displayName);
                 <Button
                   variant="primary"
                   onClick={() => openPlaid?.()}
-                  style={{ background: '#fff', color: 'var(--teal-700)', fontWeight: 700 }}
+                  style={{ background: 'var(--fg-inverse)', color: 'var(--primary)', fontWeight: 700 }}
                 >
                   <Icon d={ICONS.lock} size={14} /> Connect via Plaid — it's secure
                 </Button>
@@ -320,7 +320,7 @@ console.log(user.displayName);
                   {loading ? '···' : '— not connected —'}
                 </span>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 500, margin: '10px 0', color: 'var(--ink-200)', fontFamily: 'var(--font-mono, monospace)' }}>
+              <div style={{ fontSize: 28, fontWeight: 500, margin: '10px 0', color: 'var(--fg-3)', fontFamily: 'var(--font-mono)' }}>
                 — — —
               </div>
               <Badge tone="default">{loading ? 'Loading…' : 'Connect to view'}</Badge>
@@ -347,27 +347,20 @@ console.log(user.displayName);
 
         {/* ── AI Insight hero ────────────────────────────────────────── */}
         <Card style={{
-          background: connected
-            ? 'linear-gradient(180deg, var(--amber-50) 0%, #fff 70%)'
-            : 'var(--ink-50)',
-          borderColor: connected
-            ? 'color-mix(in srgb, var(--amber-400) 35%, var(--border-1))'
-            : 'var(--border-1)',
+          background: connected ? 'var(--surface-low)' : 'var(--surface-low)',
           padding: 24, marginBottom: 24,
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
             <div style={{
               width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-              background: connected
-                ? 'linear-gradient(135deg, var(--amber-300), var(--amber-400))'
-                : 'var(--ink-100)',
-              color: connected ? 'var(--ink-800)' : 'var(--fg-3)',
+              background: connected ? 'var(--primary)' : 'var(--surface-low)',
+              color: connected ? 'var(--fg-inverse)' : 'var(--fg-3)',
               display: 'grid', placeItems: 'center', fontWeight: 700,
             }}>
               {connected ? '✦' : <Icon d={ICONS.lock} size={18} />}
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: connected ? 'var(--amber-500)' : 'var(--fg-3)', marginBottom: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: connected ? 'var(--accent)' : 'var(--fg-3)', marginBottom: 8 }}>
                 {connected ? "This week's insight" : 'AI insights — locked'}
               </div>
               <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, lineHeight: 1.3, color: connected ? 'var(--fg-1)' : 'var(--fg-3)', marginBottom: 14 }}>
@@ -420,7 +413,7 @@ console.log(user.displayName);
 
               {(connected && topCategories.length > 0 ? topCategories.map(cat => ({
                 name: cat.category, pct: Math.round((cat.total / (topCategories[0]?.total ?? 1)) * 100),
-                color: cat.color?.primary ?? 'var(--teal-500)',
+                color: cat.color?.primary ?? 'var(--primary)',
                 label: `$${cat.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
               })) : PLACEHOLDER_BUDGET).map(b => (
                 <div key={b.name} style={{ marginBottom: 14 }}>
@@ -428,7 +421,7 @@ console.log(user.displayName);
                     <span style={{ fontWeight: 500 }}>{b.name}</span>
                     <span className="money" style={{ color: 'var(--fg-2)' }}>{b.label ?? '—'}</span>
                   </div>
-                  <div style={{ height: 6, background: 'var(--ink-100)', borderRadius: 999 }}>
+                  <div style={{ height: 4, background: 'var(--border-1)', borderRadius: 'var(--radius-xs)' }}>
                     <div style={{ width: `${b.pct}%`, height: '100%', borderRadius: 999, background: b.color }} />
                   </div>
                 </div>
@@ -454,7 +447,7 @@ console.log(user.displayName);
                     display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
                     borderBottom: i < FALLBACK_TXS.length - 1 ? '1px solid var(--border-1)' : 0,
                   }}>
-                    <div className="category-icon-box" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ink-50)', color: 'var(--fg-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <div className="category-icon-box" style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--surface-low)', color: 'var(--fg-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                       <CategoryIcon iconKey={t.icon} size={16} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -479,9 +472,9 @@ console.log(user.displayName);
         {/* ── Quick actions ─────────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: 14 }}>
           {[
-            { label: 'Full spending analysis', sub: connected ? 'AI breakdown of 90 days'  : 'Requires bank connection', icon: ICONS.zap,     path: '/analyze',      accent: 'var(--amber-400)', disabled: !connected },
-            { label: 'Transaction history',    sub: connected ? 'Filter, search, export'    : 'Requires bank connection', icon: ICONS.list,    path: '/transactions', accent: 'var(--teal-500)', disabled: !connected },
-            { label: 'Run a simulation',       sub: 'Budget what-if scenarios',              icon: ICONS.sliders, path: '/simulate',     accent: '#533AB7',        disabled: false },
+            { label: 'Full spending analysis', sub: connected ? 'AI breakdown of 90 days'  : 'Requires bank connection', icon: ICONS.zap,     path: '/analyze',      accent: 'var(--primary)', disabled: !connected },
+            { label: 'Transaction history',    sub: connected ? 'Filter, search, export'    : 'Requires bank connection', icon: ICONS.list,    path: '/transactions', accent: 'var(--primary)', disabled: !connected },
+            { label: 'Run a simulation',       sub: 'Budget what-if scenarios',              icon: ICONS.sliders, path: '/simulate',     accent: 'var(--primary)', disabled: false },
           ].map(card => (
             <button
               key={card.path}

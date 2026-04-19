@@ -5,24 +5,24 @@ function lerp(min, max, t) {
 function getTrunkColor(score) {
   if (score < 20) return '#D3D1C7';
   if (score < 40) return '#B4B2A9';
-  if (score < 60) return '#9FE1CB';
-  if (score < 80) return '#5DCAA5';
-  return '#1D9E75';
+  if (score < 60) return '#8aab95';
+  if (score < 80) return '#4a7a60';
+  return '#27500A';
 }
 
 function getLeafColor(score) {
   if (score < 20) return '#D3D1C7';
-  if (score < 35) return '#C0DD97';
-  if (score < 55) return '#97C459';
-  if (score < 75) return '#639922';
-  return '#27500A';
+  if (score < 35) return '#8aab95';
+  if (score < 55) return '#4a7a60';
+  if (score < 75) return '#27500A';
+  return '#173124';
 }
 
 function getGroundColor(score) {
-  if (score < 25) return '#B4B2A9';
-  if (score < 50) return '#C0DD97';
-  if (score < 75) return '#97C459';
-  return '#639922';
+  if (score < 25) return '#c5b9a8';
+  if (score < 50) return '#a8b89a';
+  if (score < 75) return '#6b9475';
+  return '#3B6D11';
 }
 
 function drawGround(ctx, x, groundY, score, W) {

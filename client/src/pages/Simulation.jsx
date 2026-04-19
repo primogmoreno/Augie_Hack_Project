@@ -38,7 +38,7 @@ const EXPENSE_KEYS  = EXPENSE_FIELDS.map(f => f.key);
 function NumberInput({ value, onChange, placeholder = '0' }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--teal-500)', fontFamily: 'var(--font-mono)' }}>$</span>
+      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--primary)', fontFamily: 'var(--font-mono)' }}>$</span>
       <input
         type="number"
         min="0"
@@ -49,7 +49,7 @@ function NumberInput({ value, onChange, placeholder = '0' }) {
         style={{
           width: 110,
           padding: '7px 10px',
-          border: '1px solid var(--ink-200)',
+          border: '1px solid var(--border-1)',
           borderRadius: 8,
           fontSize: 14,
           fontFamily: 'var(--font-mono)',
@@ -80,11 +80,11 @@ function BudgetRow({ label, sub, typical, yours }) {
           </span>
         </div>
       </div>
-      <div style={{ height: 8, background: 'var(--ink-100)', borderRadius: 999, overflow: 'hidden' }}>
+      <div style={{ height: 8, background: 'var(--border-1)', borderRadius: 999, overflow: 'hidden' }}>
         <div style={{
           width: `${Math.min(100, pctTypical)}%`,
           height: '100%',
-          background: over ? 'var(--danger)' : 'var(--teal-500)',
+          background: over ? 'var(--danger)' : 'var(--primary)',
           borderRadius: 999,
           transition: 'width 0.4s ease',
         }} />
@@ -163,12 +163,12 @@ export default function Simulation() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <TopBar title="Budget Simulation" subtitle="See how your spending compares to the 50/30/20 guideline" />
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--ink-0)' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)' }}>
           <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Income & Savings */}
             <Card style={{ padding: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal-500)', marginBottom: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', marginBottom: 4 }}>
                 Step 1 of 2
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, margin: '0 0 20px' }}>
@@ -185,7 +185,7 @@ export default function Simulation() {
                     min="0" max="20000" step="100"
                     value={form.monthlyIncome}
                     onChange={e => set('monthlyIncome')(Number(e.target.value))}
-                    style={{ flex: 1, accentColor: 'var(--teal-500)' }}
+                    style={{ flex: 1, accentColor: 'var(--primary)' }}
                   />
                   <NumberInput value={form.monthlyIncome} onChange={v => set('monthlyIncome')(Number(v) || 0)} />
                 </div>
@@ -204,7 +204,7 @@ export default function Simulation() {
 
             {/* Expenses */}
             <Card style={{ padding: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal-500)', marginBottom: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', marginBottom: 4 }}>
                 Step 2 of 2
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, margin: '0 0 6px' }}>
@@ -233,7 +233,7 @@ export default function Simulation() {
               {/* Running total */}
               <div style={{
                 marginTop: 20,
-                background: 'var(--ink-50)',
+                background: 'var(--surface-low)',
                 borderRadius: 10,
                 padding: '14px 16px',
                 display: 'flex',
@@ -289,7 +289,7 @@ export default function Simulation() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--ink-0)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)' }}>
         <div style={{ maxWidth: 780, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           {/* Summary cards */}
@@ -299,7 +299,7 @@ export default function Simulation() {
               { label: 'Monthly Savings', value: fmt(form.monthlySavings), color: 'var(--teal-600)' },
               { label: 'Savings Rate',    value: `${savingsRate}%`,        color: Number(savingsRate) >= 20 ? 'var(--success)' : 'var(--warning)' },
             ].map(c => (
-              <div key={c.label} style={{ background: 'var(--ink-50)', border: '1px solid var(--border-1)', borderRadius: 12, padding: '18px 20px' }}>
+              <div key={c.label} style={{ background: 'var(--surface-low)', border: '1px solid var(--border-1)', borderRadius: 12, padding: '18px 20px' }}>
                 <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)', marginBottom: 8 }}>{c.label}</div>
                 <div className="money" style={{ fontSize: 24, fontWeight: 500, color: c.color }}>{c.value}</div>
               </div>
@@ -360,23 +360,22 @@ export default function Simulation() {
 
           {/* Personalized Insights */}
           <Card style={{
-            background: 'linear-gradient(180deg, var(--amber-50) 0%, #fff 70%)',
-            borderColor: 'color-mix(in srgb, var(--amber-400) 35%, var(--border-1))',
+            background: 'var(--surface-low)',
             padding: 28,
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
               <div style={{
                 width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                background: 'linear-gradient(135deg, var(--amber-300), var(--amber-400))',
-                color: 'var(--ink-800)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18,
+                background: 'var(--primary)',
+                color: 'var(--fg-inverse)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18,
               }}>✦</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--amber-500)', marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent)', marginBottom: 8 }}>
                   Personalized Insights · Powered by Gemini
                 </div>
                 {tipsLoading ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--fg-3)', fontSize: 14 }}>
-                    <div style={{ width: 16, height: 16, border: '2px solid var(--amber-200)', borderTopColor: 'var(--amber-400)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                    <div style={{ width: 16, height: 16, border: '2px solid var(--accent-muted)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                     Generating your personalized tips…
                   </div>
                 ) : (
@@ -385,7 +384,7 @@ export default function Simulation() {
                       <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14, lineHeight: 1.55 }}>
                         <span style={{
                           width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                          background: 'var(--amber-200)', color: 'var(--amber-700)',
+                          background: 'var(--accent-muted)', color: 'var(--accent)',
                           display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700, marginTop: 1,
                         }}>{i + 1}</span>
                         <span style={{ color: 'var(--fg-1)' }}>{tip}</span>

@@ -3,8 +3,8 @@ export default function HealthScoreRing({ score, size = 72 }) {
   const circumference = 2 * Math.PI * radius;
   const offset       = circumference - (score / 100) * circumference;
 
-  const color = score < 30 ? '#E24B4A' : score < 50 ? '#BA7517' : score < 70 ? '#639922' : '#1D9E75';
-  const track = score < 30 ? '#FCEBEB' : score < 50 ? '#FAEEDA' : score < 70 ? '#EAF3DE' : '#E1F5EE';
+  const color = score < 30 ? '#B83A2E' : score < 50 ? '#A8631A' : score < 70 ? '#2F8F5A' : '#173124';
+  const track = score < 30 ? '#F6DDD8' : score < 50 ? '#FBEBD3' : score < 70 ? '#E4F2EA' : 'rgba(23,49,36,0.06)';
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>

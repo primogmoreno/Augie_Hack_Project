@@ -35,8 +35,8 @@ export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, on
           </div>
 
           <div style={{
-            background: 'var(--ink-50)',
-            borderRadius: 10,
+            background: 'var(--surface-low)',
+            borderRadius: 'var(--radius-lg)',
             padding: '14px 16px',
           }}>
             <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--fg-3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
@@ -74,10 +74,10 @@ export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, on
               onClick={handleAsk}
               style={{
                 padding: '8px 14px',
-                borderRadius: 8,
+                borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                background: '#185FA5',
-                color: '#fff',
+                background: '#173124',
+                color: '#faf9f5',
                 fontSize: 13,
                 fontFamily: 'var(--font-sans)',
                 fontWeight: 600,
@@ -92,9 +92,9 @@ export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, on
               style={{
                 padding: '8px 14px',
                 borderRadius: 8,
-                border: `1px solid ${isRead ? '#639922' : 'var(--border-1)'}`,
-                background: isRead ? '#EAF3DE' : '#fff',
-                color: isRead ? '#27500A' : 'var(--fg-2)',
+                border: `1px solid ${isRead ? '#2F8F5A' : 'var(--border-1)'}`,
+                background: isRead ? '#E4F2EA' : 'var(--surface-low)',
+                color: isRead ? '#173124' : 'var(--fg-2)',
                 fontSize: 13,
                 fontFamily: 'var(--font-sans)',
                 fontWeight: 500,
@@ -109,9 +109,9 @@ export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, on
               style={{
                 marginLeft: 'auto',
                 padding: '8px 14px',
-                borderRadius: 8,
-                border: '0.5px solid var(--border-1)',
-                background: '#fff',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-1)',
+                background: 'var(--surface-low)',
                 color: 'var(--fg-2)',
                 fontSize: 13,
                 fontFamily: 'var(--font-sans)',

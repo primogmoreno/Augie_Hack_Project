@@ -1,73 +1,63 @@
 /* BitMoney Simulator Styles */
 
 :root {
-  --teal-50:  #EAF5F3;
-  --teal-100: #CFE6E1;
-  --teal-200: #9ECDC3;
-  --teal-300: #6BB2A4;
-  --teal-400: #3E9687;
-  --teal-500: #1F7A6B;
-  --teal-600: #166055;
-  --teal-700: #0F4A41;
-  --teal-800: #0A352F;
-  --teal-900: #07221E;
+  /* Brand */
+  --primary:        #173124;
+  --primary-hover:  #0f2119;
+  --primary-muted:  rgba(23, 49, 36, 0.06);
+  --accent:         #4f1b08;
+  --accent-hover:   #3a1306;
+  --accent-muted:   rgba(79, 27, 8, 0.08);
 
-  --amber-50:  #FBF1E0;
-  --amber-100: #F6E1B8;
-  --amber-200: #EFC97E;
-  --amber-300: #E5AC48;
-  --amber-400: #D2902A;
-  --amber-500: #A8721F;
-  --amber-600: #7D5617;
+  /* Surfaces */
+  --bg-page:        #faf9f5;
+  --surface:        #faf9f5;
+  --surface-low:    #f3f1eb;
+  --surface-card:   #ffffff;
+  --bg-surface:     #ffffff;
+  --bg-surface-alt: #f3f1eb;
 
-  --ink-0:   #FBF8F3;
-  --ink-50:  #F3EEE5;
-  --ink-100: #E7DFD1;
-  --ink-200: #CFC4B2;
-  --ink-300: #AFA494;
-  --ink-400: #887F71;
-  --ink-500: #5F5649;
-  --ink-600: #443C31;
-  --ink-700: #2E2820;
-  --ink-800: #1C1813;
-  --ink-900: #0F0D09;
+  /* Text */
+  --fg-1:       #173124;
+  --fg-2:       #57534e;
+  --fg-3:       #a09a93;
+  --fg-4:       #c8c3bc;
+  --fg-inverse: #faf9f5;
+  --fg-link:    #173124;
 
+  /* Borders */
+  --border-1: rgba(23, 49, 36, 0.10);
+  --border-2: rgba(23, 49, 36, 0.18);
+
+  /* Semantic */
   --success:    #2F8F5A;
   --success-bg: #E4F2EA;
-  --warning:    #C97B1F;
+  --warning:    #A8631A;
   --warning-bg: #FBEBD3;
   --danger:     #B83A2E;
   --danger-bg:  #F6DDD8;
   --info:       #2D6FA8;
   --info-bg:    #DCE9F5;
 
-  --bg-page:        var(--ink-0);
-  --bg-surface:     #FFFFFF;
-  --bg-surface-alt: var(--ink-50);
+  /* Fonts */
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-sans:    'Manrope', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', Menlo, monospace;
 
-  --fg-1: var(--ink-800);
-  --fg-2: var(--ink-600);
-  --fg-3: var(--ink-400);
-  --fg-4: var(--ink-300);
-  --fg-link: var(--teal-600);
+  /* Shape */
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   12px;
+  --radius-full: 999px;
 
-  --border-1: var(--ink-100);
-  --border-2: var(--ink-200);
-
-  --primary:       var(--teal-500);
-  --primary-hover: var(--teal-600);
-  --accent:        var(--amber-400);
-  --accent-soft:   var(--amber-50);
-
-  --font-display: 'Fraunces', 'Georgia', serif;
-  --font-sans:    'Inter', -apple-system, system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', 'Menlo', monospace;
-
-  --shadow-xs: 0 1px 2px rgba(44, 31, 15, 0.06);
-  --shadow-sm: 0 2px 4px rgba(44, 31, 15, 0.06), 0 1px 2px rgba(44, 31, 15, 0.04);
-  --shadow-md: 0 6px 14px rgba(44, 31, 15, 0.08), 0 2px 4px rgba(44, 31, 15, 0.04);
-  --shadow-lg: 0 18px 38px rgba(44, 31, 15, 0.10), 0 4px 10px rgba(44, 31, 15, 0.04);
-  --shadow-inset: inset 0 1px 2px rgba(44, 31, 15, 0.06);
+  /* Shadows */
+  --shadow-xs:    0 1px 3px rgba(23, 49, 36, 0.05);
+  --shadow-sm:    0 2px 8px rgba(23, 49, 36, 0.06);
+  --shadow-md:    0 6px 24px rgba(23, 49, 36, 0.07);
+  --shadow-lg:    0 16px 40px rgba(23, 49, 36, 0.08);
+  --shadow-inset: inset 0 1px 3px rgba(23, 49, 36, 0.06);
 
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --dur-fast: 120ms;

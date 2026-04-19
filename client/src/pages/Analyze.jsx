@@ -81,7 +81,7 @@ export default function Analyze() {
           flex: 1,
           overflowY: "auto",
           padding: "28px 40px 60px",
-          background: "var(--ink-0)",
+          background: "var(--bg-page)",
         }}
       >
         <div style={{ maxWidth: 760 }}>
@@ -89,9 +89,7 @@ export default function Analyze() {
           {isConnected === false && (
             <Card
               style={{
-                background:
-                  "linear-gradient(135deg, var(--teal-700) 0%, #0D5C52 100%)",
-                border: "none",
+                background: "var(--primary)",
                 padding: "40px 44px",
               }}
             >
@@ -183,7 +181,7 @@ export default function Analyze() {
                     onClick={() => openPlaid?.()}
                     style={{
                       background: "#fff",
-                      color: "var(--teal-700)",
+                      color: "var(--primary)",
                       fontWeight: 700,
                       padding: "12px 28px",
                     }}
@@ -224,10 +222,7 @@ export default function Analyze() {
             <>
               <Card
                 style={{
-                  background:
-                    "linear-gradient(180deg, var(--amber-50) 0%, #fff 70%)",
-                  borderColor:
-                    "color-mix(in srgb, var(--amber-400) 35%, var(--border-1))",
+                  background: "var(--surface-low)",
                   padding: 28,
                   marginBottom: 24,
                 }}
@@ -242,8 +237,8 @@ export default function Analyze() {
                       borderRadius: 14,
                       flexShrink: 0,
                       background:
-                        "linear-gradient(135deg, var(--amber-300), var(--amber-400))",
-                      color: "var(--ink-800)",
+                        "var(--primary)",
+                      color: "var(--fg-inverse)",
                       display: "grid",
                       placeItems: "center",
                       fontWeight: 700,
@@ -259,7 +254,7 @@ export default function Analyze() {
                         fontWeight: 600,
                         textTransform: "uppercase",
                         letterSpacing: "0.08em",
-                        color: "var(--amber-500)",
+                        color: "var(--accent)",
                         marginBottom: 6,
                       }}
                     >

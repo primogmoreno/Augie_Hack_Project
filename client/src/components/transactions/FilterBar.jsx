@@ -32,10 +32,10 @@ export default function FilterBar({
 
   const pillStyle = (active) => ({
     padding: '5px 12px',
-    borderRadius: 999,
+    borderRadius: 'var(--radius-sm)',
     border: active ? 'none' : '1px solid var(--border-1)',
-    background: active ? '#185FA5' : 'transparent',
-    color: active ? '#fff' : 'var(--fg-2)',
+    background: active ? '#173124' : 'var(--surface-low)',
+    color: active ? '#faf9f5' : 'var(--fg-2)',
     fontSize: 13,
     fontWeight: 500,
     fontFamily: 'var(--font-sans)',
@@ -46,9 +46,10 @@ export default function FilterBar({
 
   return (
     <div style={{
-      background: '#fff',
-      border: '1px solid var(--border-1)',
-      borderRadius: 12,
+      background: 'var(--surface-card)',
+      border: 'none',
+      borderRadius: 'var(--radius-xl)',
+      boxShadow: 'var(--shadow-sm)',
       padding: '14px 18px',
       marginBottom: 16,
       display: 'flex',
@@ -78,8 +79,8 @@ export default function FilterBar({
             placeholder="Search merchants, categories…"
             style={{
               padding: '7px 12px',
-              border: '1px solid var(--ink-200)',
-              borderRadius: 8,
+              border: '1px solid var(--border-1)',
+              borderRadius: 'var(--radius-md)',
               fontSize: 13,
               fontFamily: 'var(--font-sans)',
               outline: 'none',
@@ -91,11 +92,11 @@ export default function FilterBar({
             onChange={e => setSortKey(e.target.value)}
             style={{
               padding: '7px 10px',
-              border: '1px solid var(--ink-200)',
-              borderRadius: 8,
+              border: '1px solid var(--border-1)',
+              borderRadius: 'var(--radius-md)',
               fontSize: 13,
               fontFamily: 'var(--font-sans)',
-              background: '#fff',
+              background: 'var(--surface-card)',
               outline: 'none',
               cursor: 'pointer',
             }}

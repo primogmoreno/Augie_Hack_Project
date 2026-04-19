@@ -1,10 +1,10 @@
 import { scoreColor } from '../../utils/treeScoring';
 
 const PILLAR_BAR_COLORS = {
-  savings:  '#1D9E75',
-  debt:     '#BA7517',
-  spending: '#185FA5',
-  literacy: '#533AB7',
+  savings:  '#173124',
+  debt:     '#173124',
+  spending: '#173124',
+  literacy: '#173124',
 };
 
 export default function PillarCard({ name, pillarKey, score, detail }) {
@@ -13,9 +13,9 @@ export default function PillarCard({ name, pillarKey, score, detail }) {
 
   return (
     <div style={{
-      background: '#fff',
-      border: '1px solid var(--border-1)',
-      borderRadius: 12,
+      background: 'var(--surface-card)',
+      borderRadius: 'var(--radius-xl)',
+      boxShadow: 'var(--shadow-xs)',
       padding: '12px 16px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -25,12 +25,12 @@ export default function PillarCard({ name, pillarKey, score, detail }) {
         <span style={{ fontSize: 13, fontWeight: 700, color }}>{score}</span>
       </div>
 
-      <div style={{ height: 5, background: 'var(--ink-100, #eee)', borderRadius: 99, marginBottom: 8, overflow: 'hidden' }}>
+      <div style={{ height: 4, background: 'var(--border-1)', borderRadius: 'var(--radius-xs)', marginBottom: 8, overflow: 'hidden' }}>
         <div style={{
           height: '100%',
           width: `${score}%`,
           background: barColor,
-          borderRadius: 99,
+          borderRadius: 'var(--radius-xs)',
           transition: 'width 0.6s ease',
         }} />
       </div>

@@ -20,9 +20,9 @@ export default function TermCard({
       style={{
         gridColumn: isExpanded ? '1 / -1' : undefined,
         padding: '1rem 1.25rem',
-        borderRadius: 12,
-        border: '0.5px solid var(--border-1)',
-        background: '#fff',
+        borderRadius: 'var(--radius-xl)',
+        boxShadow: 'var(--shadow-sm)',
+        background: 'var(--surface-card)',
         cursor: isExpanded ? 'default' : 'pointer',
         transition: 'border-color 0.15s',
       }}
@@ -44,19 +44,19 @@ export default function TermCard({
             {term.milestone && (
               <span style={{
                 fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 10,
-                background: '#FAEEDA', color: '#BA7517', border: '0.5px solid #BA7517',
+                background: '#FBEBD3', color: '#A8631A', border: '0.5px solid #A8631A',
               }}>milestone</span>
             )}
             {isRead && (
               <span style={{
                 fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 10,
-                background: '#EAF3DE', color: '#27500A', border: '0.5px solid #639922',
+                background: '#E4F2EA', color: '#173124', border: '0.5px solid #2F8F5A',
               }}>read</span>
             )}
             {term.hasPersonalData && (
               <span style={{
                 fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 10,
-                background: '#E6F1FB', color: '#0C447C', border: '0.5px solid #185FA5',
+                background: 'rgba(23,49,36,0.06)', color: '#173124', border: '0.5px solid #173124',
               }}>my data</span>
             )}
           </div>

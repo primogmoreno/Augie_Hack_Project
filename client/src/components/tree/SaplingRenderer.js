@@ -4,18 +4,18 @@ function lerp(min, max, t) {
 
 function getSaplingTrunkColor(score) {
   if (score < 16) return '#C5CDD6';
-  if (score < 36) return '#7FBFBF';
-  if (score < 61) return '#3BA8A8';
-  if (score < 81) return '#1A7F8E';
-  return '#0F5F70';
+  if (score < 36) return '#8aab95';
+  if (score < 61) return '#4a7a60';
+  if (score < 81) return '#2d5c3a';
+  return '#173124';
 }
 
 function getSaplingLeafColor(score) {
-  if (score < 16) return '#BDD4C0';
-  if (score < 36) return '#7FC9B3';
-  if (score < 61) return '#3DA899';
-  if (score < 81) return '#1D8A7A';
-  return '#0B5E55';
+  if (score < 16) return '#c5b9a8';
+  if (score < 36) return '#8aab95';
+  if (score < 61) return '#4a7a60';
+  if (score < 81) return '#27500A';
+  return '#173124';
 }
 
 function drawSaplingBoundary(ctx, x, groundY, radius) {
@@ -29,7 +29,7 @@ function drawSaplingBoundary(ctx, x, groundY, radius) {
 }
 
 function drawSaplingLabel(ctx, x, groundY, hasAccount) {
-  ctx.fillStyle = hasAccount ? 'rgba(31,122,107,0.6)' : 'rgba(180,100,20,0.6)';
+  ctx.fillStyle = hasAccount ? 'rgba(23,49,36,0.6)' : 'rgba(168,99,26,0.6)';
   ctx.font = '10px system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(hasAccount ? 'Investments' : 'Start investing', x, groundY + 22);
@@ -71,7 +71,7 @@ export function drawSapling(ctx, { x, groundY, score, hasAccount, animTime }) {
   const leafColor   = getSaplingLeafColor(score);
 
   // Ground patch
-  ctx.fillStyle = score > 50 ? '#7FC9B3' : '#BDD4C0';
+  ctx.fillStyle = score > 50 ? '#4a7a60' : '#c5b9a8';
   ctx.beginPath();
   ctx.ellipse(x, groundY, boundaryR * 0.75, boundaryR * 0.22, 0, 0, Math.PI * 2);
   ctx.fill();
@@ -110,7 +110,7 @@ export function drawSapling(ctx, { x, groundY, score, hasAccount, animTime }) {
     drawLeafBlob(ctx, x + canopyR * 0.7, canopyY + canopyR * 0.35, canopyR * 0.7, leafColor, animTime, 2);
     drawLeafBlob(ctx, x, canopyY, canopyR, leafColor, animTime, 0);
     // Mini fruits
-    ctx.fillStyle = '#56C0A0';
+    ctx.fillStyle = '#2F8F5A';
     for (let i = 0; i < 3; i++) {
       const angle = (i / 3) * Math.PI * 2;
       const fx = x + Math.cos(angle) * canopyR * 0.55;
@@ -133,7 +133,7 @@ export function drawSapling(ctx, { x, groundY, score, hasAccount, animTime }) {
       const sx = x + Math.cos(angle) * (canopyR + 6);
       const sy = canopyY + Math.sin(angle) * (canopyR * 0.5);
       const opacity = 0.5 + Math.sin(animTime * 0.004 + i) * 0.5;
-      ctx.fillStyle = `rgba(100, 220, 200, ${opacity})`;
+      ctx.fillStyle = `rgba(47, 143, 90, ${opacity})`;
       ctx.beginPath();
       ctx.arc(sx, sy, 2, 0, Math.PI * 2);
       ctx.fill();

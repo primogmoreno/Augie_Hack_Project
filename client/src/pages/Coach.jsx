@@ -88,7 +88,7 @@ export default function Coach() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <TopBar title="Coach" subtitle="Powered by Gemini" />
 
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '28px 40px', background: 'var(--ink-0)' }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '28px 40px', background: 'var(--bg-page)' }}>
         <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {messages.map((m, i) => (
             <div key={i} style={{ animation: 'fadeIn var(--dur-base) var(--ease-out)' }}>
@@ -102,10 +102,8 @@ export default function Coach() {
                 <div style={{
                   width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
                   display: 'grid', placeItems: 'center',
-                  background: m.role === 'ai'
-                    ? 'linear-gradient(135deg, var(--amber-300), var(--amber-400))'
-                    : 'var(--teal-500)',
-                  color: m.role === 'ai' ? 'var(--ink-800)' : '#fff',
+                  background: 'var(--primary)',
+                  color: 'var(--fg-inverse)',
                   fontWeight: 700,
                   fontSize: m.role === 'ai' ? 14 : 12,
                 }}>
@@ -116,12 +114,13 @@ export default function Coach() {
                   borderRadius: 14,
                   borderTopLeftRadius:  m.role === 'ai'   ? 4  : 14,
                   borderTopRightRadius: m.role === 'user' ? 4  : 14,
-                  background: m.role === 'ai' ? '#fff' : 'var(--ink-800)',
-                  color: m.role === 'ai' ? 'var(--fg-1)' : 'var(--ink-0)',
+                  background: m.role === 'ai' ? 'var(--surface-card)' : 'var(--primary)',
+                  color: m.role === 'ai' ? 'var(--fg-1)' : 'var(--fg-inverse)',
                   border: m.role === 'ai' ? '1px solid var(--border-1)' : 0,
                   boxShadow: m.role === 'ai' ? 'var(--shadow-xs)' : 'none',
-                  fontSize: 14.5,
-                  lineHeight: 1.55,
+                  fontFamily: m.role === 'ai' ? 'var(--font-display)' : 'var(--font-sans)',
+                  fontSize: m.role === 'ai' ? 16 : 14.5,
+                  lineHeight: 1.65,
                   whiteSpace: 'pre-wrap',
                 }}>
                   {m.text}
@@ -138,8 +137,8 @@ export default function Coach() {
                       style={{
                         padding: '6px 12px',
                         border: '1px solid var(--border-1)',
-                        background: '#fff',
-                        borderRadius: 999,
+                        background: 'var(--surface-low)',
+                        borderRadius: 'var(--radius-sm)',
                         fontSize: 13,
                         cursor: 'pointer',
                         color: 'var(--fg-1)',
@@ -158,8 +157,8 @@ export default function Coach() {
             <div style={{ display: 'flex', gap: 10, animation: 'fadeIn var(--dur-base) var(--ease-out)' }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--amber-300), var(--amber-400))',
-                display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14, color: 'var(--ink-800)',
+                background: 'var(--primary)',
+                display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14, color: 'var(--fg-inverse)',
               }}>✦</div>
               <div style={{
                 padding: '12px 16px', borderRadius: 14, borderTopLeftRadius: 4,
@@ -173,7 +172,7 @@ export default function Coach() {
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid var(--border-1)', background: '#fff', padding: '16px 40px' }}>
+      <div style={{ borderTop: '1px solid var(--border-1)', background: 'var(--bg-page)', padding: '16px 40px' }}>
         <form
           onSubmit={e => { e.preventDefault(); send(input); }}
           style={{ maxWidth: 720, margin: '0 auto', display: 'flex', gap: 10, alignItems: 'center' }}
@@ -185,7 +184,7 @@ export default function Coach() {
             style={{
               flex: 1,
               padding: '12px 16px',
-              border: '1px solid var(--ink-200)',
+              border: '1px solid var(--border-1)',
               borderRadius: 12,
               fontSize: 15,
               outline: 'none',

@@ -15,17 +15,16 @@ export default function ProgressHeader({ readTerms }) {
         style={{
           width: 120,
           height: 6,
-          background: 'var(--ink-100)',
-          borderRadius: 3,
+          background: 'var(--border-1)',
+          borderRadius: 'var(--radius-xs)',
           overflow: 'hidden',
-          border: '0.5px solid var(--border-1)',
         }}
       >
         <div style={{
           height: '100%',
           width: `${pct}%`,
-          background: '#639922',
-          borderRadius: 3,
+          background: '#2F8F5A',
+          borderRadius: 'var(--radius-xs)',
           transition: 'width 0.4s ease',
         }} />
       </div>

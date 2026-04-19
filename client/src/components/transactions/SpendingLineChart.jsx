@@ -13,14 +13,14 @@ export default function SpendingLineChart({ weeklySpending }) {
       <div style={{ height: 160, position: 'relative' }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={weeklySpending} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--ink-100)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-1)" />
             <XAxis dataKey="week" tick={{ fontSize: 11, fill: 'var(--fg-3)', fontFamily: 'var(--font-sans)' }} />
             <YAxis tick={{ fontSize: 11, fill: 'var(--fg-3)', fontFamily: 'var(--font-mono)' }} tickFormatter={v => `$${v}`} />
             <Tooltip
               formatter={v => [`$${v.toFixed(2)}`, 'Spending']}
               contentStyle={{ fontFamily: 'var(--font-sans)', fontSize: 13, border: '1px solid var(--border-1)', borderRadius: 10, boxShadow: 'var(--shadow-md)' }}
             />
-            <Line type="monotone" dataKey="total" stroke="#185FA5" strokeWidth={2} dot={{ r: 3, fill: '#185FA5' }} activeDot={{ r: 5 }} />
+            <Line type="monotone" dataKey="total" stroke="#173124" strokeWidth={2} dot={{ r: 3, fill: '#173124' }} activeDot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

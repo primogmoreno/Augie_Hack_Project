@@ -121,7 +121,7 @@ export default function TransactionHistory() {
                   style={{
                     padding: '6px 14px', borderRadius: 8,
                     border: dateRange === d ? 'none' : '1px solid var(--border-1)',
-                    background: dateRange === d ? 'var(--teal-500)' : 'transparent',
+                    background: dateRange === d ? 'var(--primary)' : 'transparent',
                     color: dateRange === d ? '#fff' : 'var(--fg-2)',
                     fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-sans)',
                     cursor: 'pointer', transition: 'all var(--dur-fast) var(--ease-out)',
@@ -139,13 +139,13 @@ export default function TransactionHistory() {
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--ink-0)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)' }}>
 
         {/* ── NOT CONNECTED ─────────────────────────────────────────── */}
         {isConnected === false && (
           <div style={{ maxWidth: 640, margin: '40px auto 0' }}>
             <Card style={{
-              background: 'linear-gradient(135deg, var(--teal-700) 0%, #0D5C52 100%)',
+              background: 'var(--primary)',
               border: 'none', padding: '36px 40px', textAlign: 'center',
             }}>
               <div style={{
@@ -187,7 +187,7 @@ export default function TransactionHistory() {
 
               <Button
                 onClick={() => openPlaid?.()}
-                style={{ background: '#fff', color: 'var(--teal-700)', fontWeight: 700, padding: '12px 28px' }}
+                style={{ background: 'var(--fg-inverse)', color: 'var(--primary)', fontWeight: 700, padding: '12px 28px' }}
               >
                 <Icon d={ICONS.lock} size={14} /> Connect via Plaid — it's secure
               </Button>

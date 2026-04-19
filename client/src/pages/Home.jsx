@@ -13,7 +13,7 @@ export default function Home() {
       minHeight: '100vh',
       display: 'grid',
       placeItems: 'center',
-      background: 'var(--ink-0)',
+      background: 'var(--bg-page)',
       padding: 40,
     }}>
       <div style={{ maxWidth: 520, width: '100%' }}>
@@ -25,6 +25,7 @@ export default function Home() {
             </div>
             <h1 style={{
               fontFamily: 'var(--font-display)',
+              fontStyle: 'italic',
               fontSize: 44,
               fontWeight: 500,
               letterSpacing: '-0.02em',

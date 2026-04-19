@@ -1,15 +1,15 @@
 const sizes = {
-  sm: { padding: '6px 12px', fontSize: 13, borderRadius: 8 },
-  md: { padding: '10px 18px', fontSize: 15, borderRadius: 10 },
-  lg: { padding: '14px 24px', fontSize: 16, borderRadius: 12 },
+  sm: { padding: '6px 12px',  fontSize: 13, borderRadius: 'var(--radius-sm)' },
+  md: { padding: '10px 18px', fontSize: 14, borderRadius: 'var(--radius-sm)' },
+  lg: { padding: '14px 24px', fontSize: 15, borderRadius: 'var(--radius-md)' },
 };
 
 const variants = {
-  primary:   { background: 'var(--teal-500)', color: '#fff', boxShadow: 'var(--shadow-sm)', borderColor: 'transparent' },
-  secondary: { background: '#fff', color: 'var(--fg-1)', borderColor: 'var(--ink-200)' },
-  ghost:     { background: 'transparent', color: 'var(--fg-1)', borderColor: 'transparent' },
-  accent:    { background: 'var(--amber-400)', color: 'var(--ink-800)', boxShadow: 'var(--shadow-sm)', borderColor: 'transparent' },
-  dark:      { background: 'var(--ink-800)', color: '#fff', borderColor: 'transparent' },
+  primary:   { background: 'var(--primary)',     color: 'var(--fg-inverse)', borderColor: 'transparent' },
+  secondary: { background: 'var(--surface-low)', color: 'var(--fg-1)',       borderColor: 'var(--border-1)' },
+  ghost:     { background: 'transparent',        color: 'var(--fg-1)',       borderColor: 'transparent' },
+  accent:    { background: 'var(--accent)',       color: 'var(--fg-inverse)', borderColor: 'transparent' },
+  dark:      { background: 'var(--primary)',      color: 'var(--fg-inverse)', borderColor: 'transparent' },
 };
 
 export default function Button({ variant = 'primary', size = 'md', children, onClick, disabled, style, type = 'button', ...rest }) {
@@ -28,7 +28,7 @@ export default function Button({ variant = 'primary', size = 'md', children, onC
         display: 'inline-flex',
         alignItems: 'center',
         gap: 8,
-        opacity: disabled ? 0.5 : 1,
+        opacity: disabled ? 0.4 : 1,
         ...sizes[size],
         ...variants[variant],
         ...style,

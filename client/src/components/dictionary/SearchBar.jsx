@@ -47,11 +47,11 @@ export default function SearchBar({ searchVal, onSearchChange, sortKey, onSortCh
             paddingTop: 9,
             paddingBottom: 9,
             border: '0.5px solid var(--border-1)',
-            borderRadius: 10,
+            borderRadius: 'var(--radius-md)',
             fontSize: 13,
             fontFamily: 'var(--font-sans)',
             color: 'var(--fg-1)',
-            background: '#fff',
+            background: 'var(--surface-card)',
             outline: 'none',
           }}
         />
@@ -66,11 +66,11 @@ export default function SearchBar({ searchVal, onSearchChange, sortKey, onSortCh
           width: 150,
           padding: '9px 12px',
           border: '0.5px solid var(--border-1)',
-          borderRadius: 10,
+          borderRadius: 'var(--radius-md)',
           fontSize: 13,
           fontFamily: 'var(--font-sans)',
           color: 'var(--fg-1)',
-          background: '#fff',
+          background: 'var(--surface-card)',
           cursor: 'pointer',
           outline: 'none',
         }}

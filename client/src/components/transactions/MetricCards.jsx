@@ -2,7 +2,7 @@ import CategoryIcon from '../ui/CategoryIcon';
 
 function StatCard({ label, value, sub, valueColor }) {
   return (
-    <div style={{ background: 'var(--ink-50)', border: '1px solid var(--border-1)', borderRadius: 12, padding: '18px 20px' }}>
+    <div style={{ background: 'var(--surface-low)', borderRadius: 'var(--radius-xl)', padding: '18px 20px' }}>
       <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)', marginBottom: 8 }}>
         {label}
       </div>
@@ -48,9 +48,8 @@ export default function MetricCards({ summary }) {
 
       {savings_invested > 0 && (
         <div style={{
-          background: 'linear-gradient(135deg, var(--teal-50), #fff)',
-          border: '1px solid var(--teal-100)',
-          borderRadius: 12,
+          background: 'var(--surface-low)',
+          borderRadius: 'var(--radius-xl)',
           padding: '18px 24px',
           display: 'flex',
           alignItems: 'center',
@@ -58,20 +57,20 @@ export default function MetricCards({ summary }) {
         }}>
           <div style={{
             width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-            background: 'var(--teal-500)',
+            background: 'var(--primary)',
             display: 'grid', placeItems: 'center',
           }}>
             <CategoryIcon iconKey="savings" size={22} color="#fff" />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--teal-600)', marginBottom: 4 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', marginBottom: 4 }}>
               Amount Saved / Invested
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
-              <span className="money" style={{ fontSize: 28, fontWeight: 500, color: 'var(--teal-700)' }}>
+              <span className="money" style={{ fontSize: 28, fontWeight: 500, color: 'var(--primary)' }}>
                 ${savings_invested.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
-              <span style={{ fontSize: 13, color: 'var(--teal-600)' }}>
+              <span style={{ fontSize: 13, color: 'var(--primary)' }}>
                 in the last {period_days} days — this money is working for your future, not being spent.
               </span>
             </div>

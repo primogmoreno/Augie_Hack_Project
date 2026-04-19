@@ -42,7 +42,7 @@ export default function RateRealityCheck({ userApr = 21.99, userBalance = 1284.5
   if (loading) {
     return (
       <Card style={{ padding: 24, display: 'flex', alignItems: 'center', gap: 12, color: 'var(--fg-3)' }}>
-        <div style={{ width: 20, height: 20, border: '2px solid var(--teal-100)', borderTopColor: 'var(--teal-500)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <div style={{ width: 20, height: 20, border: '2px solid var(--primary-muted)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         Loading rate data…
       </Card>
     );
@@ -67,7 +67,7 @@ export default function RateRealityCheck({ userApr = 21.99, userBalance = 1284.5
 
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={series} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--ink-100)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-1)" />
           <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--fg-3)', fontFamily: 'var(--font-sans)' }} />
           <YAxis unit="%" domain={[8, yMax]} tick={{ fontSize: 11, fill: 'var(--fg-3)', fontFamily: 'var(--font-mono)' }} />
           <Tooltip
@@ -81,19 +81,18 @@ export default function RateRealityCheck({ userApr = 21.99, userBalance = 1284.5
             strokeDasharray="6 3"
             label={{ value: 'Your rate', fill: 'var(--danger)', fontSize: 11, fontFamily: 'var(--font-sans)' }}
           />
-          <Line type="monotone" dataKey="creditUnion" name="Credit Union Avg" stroke="var(--teal-500)" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="bank"        name="Bank Avg"         stroke="var(--ink-400)"  strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="creditUnion" name="Credit Union Avg" stroke="#173124" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="bank"        name="Bank Avg"         stroke="#a09a93" strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
 
       <div style={{
         marginTop: 20,
-        background: 'var(--teal-50)',
-        border: '1px solid var(--teal-100)',
-        borderRadius: 12,
+        background: 'var(--primary-muted)',
+        borderRadius: 'var(--radius-lg)',
         padding: '14px 16px',
         fontSize: 13,
-        color: 'var(--teal-700)',
+        color: 'var(--primary)',
         lineHeight: 1.55,
       }}>
         At your current rate vs. the credit union average, you could save roughly{' '}
@@ -108,11 +107,11 @@ function StatCard({ label, value, tone }) {
   const colors = {
     danger:  { bg: 'var(--danger-bg)',  fg: 'var(--danger)'  },
     success: { bg: 'var(--success-bg)', fg: 'var(--success)' },
-    neutral: { bg: 'var(--ink-50)',     fg: 'var(--fg-2)'    },
+    neutral: { bg: 'var(--surface-low)', fg: 'var(--fg-2)'   },
   };
   const c = colors[tone];
   return (
-    <div style={{ background: c.bg, borderRadius: 12, padding: '14px 16px', textAlign: 'center' }}>
+    <div style={{ background: c.bg, borderRadius: 'var(--radius-lg)', padding: '14px 16px', textAlign: 'center' }}>
       <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)', marginBottom: 6 }}>
         {label}
       </div>

@@ -4,9 +4,8 @@ export default function Card({ children, style, onClick }) {
       onClick={onClick}
       className={onClick ? 'card-clickable' : undefined}
       style={{
-        background: '#fff',
-        border: '1px solid var(--border-1)',
-        borderRadius: 16,
+        background: 'var(--surface-card)',
+        borderRadius: 'var(--radius-xl)',
         padding: 20,
         boxShadow: 'var(--shadow-sm)',
         cursor: onClick ? 'pointer' : 'default',

@@ -8,9 +8,9 @@ export default function PersonalContextBlock({ contextString, loading, isConnect
         paddingBottom: 10,
         marginBottom: 12,
       }}>
-        <div style={{ height: 10, width: 80, background: 'var(--ink-100)', borderRadius: 4, marginBottom: 8 }} />
-        <div style={{ height: 13, width: '90%', background: 'var(--ink-100)', borderRadius: 4, marginBottom: 6 }} />
-        <div style={{ height: 13, width: '70%', background: 'var(--ink-100)', borderRadius: 4 }} />
+        <div style={{ height: 10, width: 80, background: 'var(--border-1)', borderRadius: 4, marginBottom: 8 }} />
+        <div style={{ height: 13, width: '90%', background: 'var(--border-1)', borderRadius: 4, marginBottom: 6 }} />
+        <div style={{ height: 13, width: '70%', background: 'var(--border-1)', borderRadius: 4 }} />
       </div>
     );
   }
@@ -36,13 +36,13 @@ export default function PersonalContextBlock({ contextString, loading, isConnect
 
   return (
     <div style={{
-      borderLeft: '3px solid #185FA5',
+      borderLeft: '3px solid #173124',
       paddingLeft: 14,
       paddingTop: 10,
       paddingBottom: 10,
       marginBottom: 12,
     }}>
-      <div style={{ fontSize: 10, fontWeight: 500, color: '#0C447C', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>
+      <div style={{ fontSize: 10, fontWeight: 500, color: '#173124', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>
         In your situation
       </div>
       <div style={{ fontSize: 13, color: 'var(--fg-1)', lineHeight: 1.55 }}>

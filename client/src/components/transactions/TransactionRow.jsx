@@ -1,15 +1,15 @@
 import CategoryIcon from '../ui/CategoryIcon';
 
 const CATEGORY_COLORS = {
-  'Food & Dining':       { primary: '#185FA5', light: '#E6F1FB' },
-  'Shopping':            { primary: '#639922', light: '#EAF3DE' },
-  'Transport':           { primary: '#BA7517', light: '#FAEEDA' },
-  'Entertainment':       { primary: '#533AB7', light: '#EEEDFE' },
-  'Utilities':           { primary: '#5F5E5A', light: '#F1EFE8' },
-  'Income':              { primary: '#3B6D11', light: '#EAF3DE' },
-  'Healthcare':          { primary: '#993556', light: '#FBEAF0' },
-  'Savings & Investing': { primary: '#1F7A6B', light: '#EAF5F3' },
-  'Other':               { primary: '#888780', light: '#F1EFE8' },
+  'Food & Dining':       { primary: '#173124', light: 'rgba(23,49,36,0.06)' },
+  'Shopping':            { primary: '#2F8F5A', light: '#E4F2EA' },
+  'Transport':           { primary: '#A8631A', light: '#FBEBD3' },
+  'Entertainment':       { primary: '#4f1b08', light: 'rgba(79,27,8,0.08)' },
+  'Utilities':           { primary: '#57534e', light: '#f3f1eb' },
+  'Income':              { primary: '#2F8F5A', light: '#E4F2EA' },
+  'Healthcare':          { primary: '#B83A2E', light: '#F6DDD8' },
+  'Savings & Investing': { primary: '#173124', light: 'rgba(23,49,36,0.06)' },
+  'Other':               { primary: '#a09a93', light: '#f3f1eb' },
 };
 
 export default function TransactionRow({ tx, isLast }) {
