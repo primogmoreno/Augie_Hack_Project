@@ -6,9 +6,10 @@ userState = {
     expenses: 0,
     investments: 0,
     jobStability: 0.8,
-    lifestyleLevel: 1,
+    relationshipStatus: "single",
     hasJob: true,
-    kids: 0
+    kids: 0,
+    hasBusiness: false
 }
 economyState = {
     inflationRate: 0.02,
@@ -17,52 +18,76 @@ economyState = {
 }
 randomLifeEvents = {
     jobLoss: {weight: 0.15, impact: -0.5,
-        condition: (state) => state.hasJob && state.jobStability < 0.5
+        condition: (state) => state.hasJob && state.jobStability < 0.5,
+        name: "Job Loss",
+        description: "You lost your job, leading to a significant drop in income."
      },
     promotion: { weight: 0.05, impact: 0.3,
-        condition: (state) => state.jobStability > 0.7 && state.age < 60 && state.hasJob
-     },
-     newJob: { weight: 0.1, impact: 0.2,
-        condition: (state) => !state.hasJob && state.age < 60
+        condition: (state) => state.jobStability > 0.7 && state.age < 60 && state.hasJob,
+        name: "Promotion",
+        description: "You got a promotion, increasing your income."
      },
     medicalExpense: { weight: 0.1, impact: -0.2,
-        condition: (state) => state.age > 40
+        condition: (state) => state.age > 40,
+        name: "Medical Expense",
+        description: "You got sick and had to pay for medical treatment."
      },
     inheritance: { weight: 0.02, impact: 0.5,
-        condition: (state) => state.age > 50
+        condition: (state) => state.age > 50,
+        name: "Inheritance",
+        description: "You received an inheritance, increasing your wealth."
      },
-    child: { weight: 0.2, impact: -0.1,
-        condition: (state) => state.age > 25 && state.age < 45
+    child: { weight: 0.1, impact: -0.1,
+        condition: (state) => state.age > 25 && state.age < 45 && state.relationshipStatus === "married",
+        name: "Child",
+        description: "You had a child, increasing your expenses."
      },
-    deathInTheFamily: { weight: 0.1, impact: -0.3 },
-    weatherDisaster: { weight: 0.03, impact: -0.4 },
-    lotteryWin: { weight: 0.01, impact: 1.0 },
+    deathInTheFamily: { weight: 0.1, impact: -0.3,
+        name: "Death in the Family",
+        description: "A family member passed away, causing emotional and financial strain."
+     },
+    weatherDisaster: { weight: 0.03, impact: -0.4,
+        name: "Weather Disaster",
+        description: "A natural disaster damaged your property, leading to unexpected expenses."
+     },
+    lotteryWin: { weight: 0.01, impact: 1.0,
+        name: "Lottery Win",
+        description: "You won the lottery, drastically increasing your wealth."
+     },
     newHouse: { weight: 0.05, impact: -0.2,
-        condition: (state) => state.age > 30 && state.age < 50
+        condition: (state) => state.age > 30 && state.age < 50,
+        name: "New House",
+        description: "You bought a new house, increasing your expenses."
      },
-    divorce: { weight: 0.05, impact: -0.3,
-        condition: (state) => state.age > 30
-     },
-    marriage: { weight: 0.05, impact: 0.2,
-        condition: (state) => state.age > 25 && state.age < 45
-    },
     businessSuccess: { weight: 0.02, impact: 0.5,
-        condition: (state) => state.jobStability < 0.5 && state.age > 30
+        condition: (state) => state.jobStability < 0.5 && state.age > 30 && state.hasBusiness,
+        name: "Business Success",
+        description: "Your business venture succeeded, increasing your wealth."
      },
     businessFailure: { weight: 0.02, impact: -0.5,
-        condition: (state) => state.jobStability < 0.5 && state.age > 30
+        condition: (state) => state.jobStability < 0.5 && state.age > 30 && state.hasBusiness,
+        name: "Business Failure",
+        description: "Your business venture failed, leading to significant financial losses."
      },
     newCar: { weight: 0.05, impact: -0.1,
-        condition: (state) => state.age > 25 && state.age < 65
+        condition: (state) => state.age > 25 && state.age < 65,
+        name: "New Car",
+        description: "You bought a new car, increasing your expenses."
      },
     healthDecline: { weight: 0.05, impact: -0.2,
-        condition: (state) => state.age > 40
+        condition: (state) => state.age > 40,
+        name: "Health Decline",
+        description: "Your health has declined, leading to increased medical expenses."
      },
      retirement: { weight: 0.1, impact: -0.3,
-        condition: (state) => state.age > 60
+        condition: (state) => state.age > 60,
+        name: "Retirement",
+        description: "You have entered retirement, reducing your income."
      },
      noMajorEvent: { weight: 0.3, impact: 0 }
 }
+
+addEventListener('DOMContentLoaded', () => {
 
 function startSimulation(){
     //initialize user state and economy state
@@ -89,9 +114,16 @@ function simulateYear() {
     // Apply inflation to expenses
     userState.expenses *= (1 + economyState.inflationRate * advanceTime);
     
+    //Apply user-selected events
+    const selectedEvents = document.querySelectorAll('input[name="lifeEvent"]:checked');
+    selectedEvents.forEach(event => {
+        enactEvent({event: event.value});
+    });
+
     // Random life events
-    event = getRandomLifeEvent();
-    enactEvent(event);
+    randomEvent = getRandomLifeEvent();
+    enactEvent(randomEvent);
+    displayRandomEvent(randomEvent);
     
     // Update economy state
     if (Math.random() < 0.1) {
@@ -175,15 +207,23 @@ function enactEvent(event) {
             break;
         case 'divorce':
             userState.cash *= 0.5;
+            userState.relationshipStatus = "divorced";
             break;
         case 'marriage':
             userState.cash += 20000;
+            userState.relationshipStatus = "married";
             break;
         case 'businessSuccess':
             userState.cash += userState.cash * 0.5;
+            hasBusiness = true;
+            break;
+        case 'startBusiness':
+            userState.cash -= 20000;
+            hasBusiness = true;
             break;
         case 'businessFailure':
             userState.cash -= userState.cash * 0.5;
+            hasBusiness = false;
             break;
         case 'newCar':
             userState.cash -= 30000;
@@ -195,7 +235,22 @@ function enactEvent(event) {
             userState.hasJob = false; 
             userState.income *= 0.5; 
             break;
+        case 'investMoney':
+            userState.cash -= 10000;
+            userState.investments += 10000;
+            break;
         default:
             break;
     }
 }
+
+function displayRandomEvent(event) {
+    const eventDisplay = document.getElementById('randomEvent');
+    eventDisplay.style.display = 'flex';
+    document.getElementById('eventTitle').textContent = event.data.name;
+    document.getElementById('eventDescription').textContent = event.data.description;
+}
+function closeEvent(){
+    document.getElementById('randomEvent').style.display = 'none';
+}
+});
