@@ -16,3 +16,13 @@ export function cacheGet(key) {
     return null;
   }
 }
+
+export function cacheDel(...keys) {
+  keys.forEach(k => sessionStorage.removeItem(k));
+}
+
+export function cacheClearAll() {
+  ['accounts', 'transactions', 'summary', 'spending_analysis'].forEach(k =>
+    sessionStorage.removeItem(k)
+  );
+}

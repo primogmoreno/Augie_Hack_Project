@@ -248,13 +248,27 @@ def remove_plaid_item():
     tokens = _get_tokens()
     if not tokens:
         return jsonify({'error': 'Not authenticated'}), 401
-    for token in tokens:
+
+    # If a specific access_token is passed, remove only that one.
+    # Otherwise (legacy/disconnect-all), remove every token.
+    target = request.json.get('access_token') if request.json else None
+    tokens_to_remove = [target] if (target and target in tokens) else tokens
+
+    remaining = [t for t in tokens if t not in tokens_to_remove]
+    for token in tokens_to_remove:
         try:
-            plaid.client.item_remove({'access_token': token})
+            from plaid.model.item_remove_request import ItemRemoveRequest
+            plaid.client.item_remove(ItemRemoveRequest(access_token=token))
         except Exception:
-            pass  # best-effort removal
-    session.pop('access_tokens', None)
-    return jsonify({'success': True})
+            pass  # best-effort
+
+    if remaining:
+        session['access_tokens'] = remaining
+        session.modified = True
+    else:
+        session.pop('access_tokens', None)
+
+    return jsonify({'success': True, 'remaining': len(remaining)})
 
 @app.route('/api/accounts', methods=['GET'])
 def get_accounts():

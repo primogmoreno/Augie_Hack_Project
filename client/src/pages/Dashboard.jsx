@@ -29,26 +29,74 @@ const PLACEHOLDER_BUDGET = [
 
 function mapPlaidAccounts(accounts, liabilities) {
   const creditCards = liabilities?.credit ?? [];
-  const result = [];
+  const groups = {}; // keyed by subtype category
+
   for (const acct of accounts) {
     const bal = acct.balances.current ?? 0;
-    if (acct.type === 'depository' && acct.subtype === 'checking') {
-      result.push({ name: 'Checking', bank: `${acct.name} ••${acct.mask}`, bal, delta: 'Connected', tone: 'success' });
-    } else if (acct.type === 'depository' && acct.subtype === 'savings') {
-      result.push({ name: 'Savings',  bank: `${acct.name} ••${acct.mask}`, bal, delta: 'Connected', tone: 'primary' });
-    } else if (acct.type === 'credit') {
-      const cc          = creditCards.find(c => c.account_id === acct.account_id);
-      const utilization = cc && acct.balances.limit ? Math.round((bal / acct.balances.limit) * 100) : null;
-      result.push({
-        name: 'Credit',
-        bank: `${acct.name} ••${acct.mask}`,
-        bal:  -bal,
-        delta: utilization !== null ? `${utilization}% utilization` : 'Connected',
-        tone: utilization > 30 ? 'warning' : 'success',
-      });
+    let category = null;
+
+    if (acct.type === "depository" && acct.subtype === "checking") {
+      category = "Checking";
+    } else if (acct.type === "depository" && acct.subtype === "savings") {
+      category = "Savings";
+    } else if (acct.type === "credit") {
+      category = "Credit";
+    } else {
+      continue; // skip others for now
     }
+
+    const cc =
+      category === "Credit"
+        ? creditCards.find((c) => c.account_id === acct.account_id)
+        : null;
+    const utilization =
+      cc && acct.balances.limit
+        ? Math.round((bal / acct.balances.limit) * 100)
+        : null;
+
+    const individual = {
+      account_id: acct.account_id,
+      name: acct.name,
+      bank: `${acct.name} ••${acct.mask}`,
+      bal: category === "Credit" ? -bal : bal,
+      limit: acct.balances.limit ?? null,
+      utilization,
+      mask: acct.mask,
+    };
+
+    if (!groups[category]) {
+      groups[category] = {
+        name: category,
+        tone:
+          category === "Credit"
+            ? "warning"
+            : category === "Savings"
+              ? "primary"
+              : "success",
+        totalBal: 0,
+        accounts: [],
+      };
+    }
+
+    groups[category].totalBal += individual.bal;
+    groups[category].accounts.push(individual);
   }
-  return result;
+
+  // build final cards
+  return Object.values(groups).map((g) => ({
+    name: g.name,
+    bank:
+      g.accounts.length === 1
+        ? g.accounts[0].bank
+        : `${g.accounts.length} accounts`,
+    bal: g.totalBal,
+    delta:
+      g.name === "Credit"
+        ? `${g.accounts.length} card${g.accounts.length > 1 ? "s" : ""}`
+        : `${g.accounts.length} account${g.accounts.length > 1 ? "s" : ""}`,
+    tone: g.tone,
+    accounts: g.accounts, // full list for modal
+  }));
 }
 
 function extractCreditInfo(accounts, liabilities) {
@@ -199,7 +247,15 @@ export default function Dashboard() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-      <PlaidLink onReady={openFn => setOpenPlaid(() => openFn)} />
+       <PlaidLink onReady={openFn => setOpenPlaid(() => openFn)}
+                 onConnected={() => {
+          // re-fetch accounts after new bank connected
+          api.get("/accounts").then(({ data }) => {
+            setAccounts(mapPlaidAccounts(data.accounts, data.liabilities));
+            setCreditInfo(extractCreditInfo(data.accounts, data.liabilities));
+            setIsConnected(true);
+          });}}
+      />
 
       <TopBar
         title={greeting}
@@ -254,22 +310,31 @@ export default function Dashboard() {
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3em', color: 'var(--accent)', marginBottom: 14 }}>
                   Total Portfolio Value
                 </div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 72, fontWeight: 300, letterSpacing: '-0.04em', color: 'var(--primary)', lineHeight: 1, margin: 0 }}>
-                  ${Math.floor(Math.abs(totalValue)).toLocaleString()}
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 72, fontWeight: 300, letterSpacing: '-0.04em', color: totalValue < 0 ? 'var(--danger, #ef4444)' : 'var(--primary)', lineHeight: 1, margin: 0 }}>
+                  {totalValue < 0 ? '−' : ''}${Math.floor(Math.abs(totalValue)).toLocaleString()}
                   <span style={{ fontSize: 40, opacity: 0.4 }}>
                     .{(Math.abs(totalValue) % 1).toFixed(2).slice(2)}
                   </span>
                 </h3>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', paddingBottom: 8 }}>
-                {accounts.length > 0 ? accounts.map((a, i) => (
-                  <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16 }}>
-                    <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 4 }}>{a.name}</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: a.name === 'Credit' ? 'var(--danger)' : 'var(--primary)' }}>
-                      {a.name === 'Credit' ? '−' : ''}${Math.abs(a.bal).toLocaleString('en-US', { minimumFractionDigits: 0 })}
-                    </div>
+                {totalValue < 0 && (
+                  <div style={{ fontSize: 12, color: 'var(--danger, #ef4444)', marginTop: 6, fontWeight: 500 }}>
+                    Net liabilities exceed assets — credit balances are included
                   </div>
-                )) : ['Checking', 'Savings', 'Credit'].map((name, i) => (
+                )}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(Math.max(accounts.length, 3), 4)}, 1fr)`, gap: '0 8px', paddingBottom: 8, flexWrap: 'wrap' }}>
+                {accounts.length > 0 ? accounts.map((a, i) => {
+                  const isCredit = a.bal < 0;
+                  return (
+                    <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16, minWidth: 0 }}>
+                      <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 2 }}>{a.name}</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: isCredit ? 'var(--danger, #ef4444)' : 'var(--primary)' }}>
+                        {isCredit ? '−' : ''}${Math.abs(a.bal).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--fg-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.bank}</div>
+                    </div>
+                  );
+                }) : ['Checking', 'Savings', 'Credit'].map((name, i) => (
                   <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16 }}>
                     <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 4 }}>{name}</div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-3)' }}>—</div>
@@ -464,11 +529,13 @@ export default function Dashboard() {
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--accent)', fontWeight: 700, marginBottom: 8 }}>
                 Projected Net Worth (1 yr)
               </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, color: 'var(--primary)', lineHeight: 1 }}>
-                {totalValue > 0 ? `$${Math.round(totalValue * 1.142).toLocaleString()}` : '—'}
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, color: totalValue < 0 ? 'var(--danger, #ef4444)' : 'var(--primary)', lineHeight: 1 }}>
+                {totalValue !== 0
+                  ? `${totalValue < 0 ? '−' : ''}$${Math.abs(Math.round(totalValue * 1.142)).toLocaleString()}`
+                  : '—'}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>
-                ↑ +14.2% from current
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 12, fontWeight: 700, color: totalValue < 0 ? 'var(--danger, #ef4444)' : 'var(--success)' }}>
+                {totalValue < 0 ? '↓ Based on current debt trajectory' : '↑ +14.2% from current'}
               </div>
             </div>
           </section>
