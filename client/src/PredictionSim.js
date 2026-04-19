@@ -91,20 +91,25 @@ addEventListener('DOMContentLoaded', () => {
     userState = JSON.parse(sessionStorage.getItem('userState')) || userState;
     economyState = JSON.parse(sessionStorage.getItem('economyState')) || economyState;
 
-    document.getElementById('startButton').addEventListener('click', startSimulation);
-    document.getElementById('closeEventButton').addEventListener('click', closeEvent);
-    document.getElementById('restartButton').addEventListener('click', () => {
-        window.location.href = "PredictionSim.html";
-    });
-    document.getElementById('continueButton').addEventListener('click', simulateYear);
+    if(window.location.pathname.includes("bitMoney.html")) {
+        displayCurrentData();
+        document.getElementById('restartButton').addEventListener('click', () => {
+         window.location.href = "PredictionSim.html";
+         });
+         document.getElementById('continueButton').addEventListener('click', simulateYear);
+         document.getElementById('closeEventButton').addEventListener('click', closeEvent);
+    }
+    if(window.location.pathname.includes("PredictionSim.html")) {
+        document.getElementById('startButton').addEventListener('click', startSimulation);
+    }
 });
 function startSimulation(){
     //initialize user state and economy state
-    userState.age = document.getElementById('ageInput').value;
-    userState.cash = document.getElementById('cashInput').value;
-    userState.income = document.getElementById('incomeInput').value;
-    userState.expenses = document.getElementById('expensesInput').value;
-    userState.investments = document.getElementById('investmentsInput').value;
+    userState.age = Number(document.getElementById('ageInput').value);
+    userState.cash = Number(document.getElementById('cashInput').value);
+    userState.income = Number(document.getElementById('income').value);
+    userState.expenses = Number(document.getElementById('expensesInput').value);
+    userState.investments = Number(document.getElementById('investmentsInput').value);
     
     sessionStorage.setItem('userState', JSON.stringify(userState));
     sessionStorage.setItem('economyState', JSON.stringify(economyState));
@@ -116,46 +121,47 @@ function simulateYear() {
         alert("Simulation complete! You lived to be " + userState.age + " years old.");
         return;
     }
+    if(userState.cash < -10000){
+        alert("Simulation complete! You went bankrupt at age " + userState.age + ".");
+        window.location.href = "PredictionSim.html";
+        return;
+    }
     // Update user state based on economy
     userState.age += advanceTime;
     userState.cash += userState.income * advanceTime;
     userState.cash -= userState.expenses * advanceTime;
-    userState.investments *= (1 + economyState.marketReturn * advanceTime);
+    userState.investments *= Math.pow(1 + economyState.marketReturn, advanceTime);
     
     // Apply inflation to expenses
-    userState.expenses *= (1 + economyState.inflationRate * advanceTime);
+    userState.expenses *= Math.pow(1 + economyState.inflationRate, advanceTime);
     
     //Apply user-selected events
     const selectedEvents = document.querySelectorAll('input[name="lifeEvent"]:checked');
-    selectedEvents.forEach(event => {
-        enactEvent({event: event.value});
+    selectedEvents.forEach(checkbox => {
+        enactEvent({event: checkbox.value});
     });
 
     // Random life events
-    randomEvent = getRandomLifeEvent();
+    const randomEvent = getRandomLifeEvent();
+    if(randomEvent && randomEvent.event !== 'noMajorEvent'){
     enactEvent(randomEvent);
     displayRandomEvent(randomEvent);
+    }
     
     // Update economy state
     if (Math.random() < 0.1) {
         economyState.recession = !economyState.recession;
         economyState.marketReturn = economyState.recession ? -0.05 : 0.05;
     }
+
+    // Save state    
+    sessionStorage.setItem('userState', JSON.stringify(userState));
+    sessionStorage.setItem('economyState', JSON.stringify(economyState));
+    displayCurrentData();
 }
 
 function getRandomLifeEvent() {
-    validEvents = Object.entries(randomLifeEvents).filter(([event, data]) => {
-        return !data.condition || data.condition(userState);
-    });
-    const totalWeight = validEvents.reduce((sum, [event, data]) => sum + data.weight, 0);
-    let random = Math.random() * totalWeight;
-    for (let [event, data] of validEvents) {
-        if (random < data.weight) {
-            userState.cash += userState.cash * data.impact;
-            break;
-        }
-        random -= data.weight;
-    }  // 1. filter valid events
+  // 1. filter valid events
     const validEvents = Object.entries(randomLifeEvents).filter(([name, data]) => {
         return !data.condition || data.condition(userState);
     });
@@ -226,15 +232,15 @@ function enactEvent(event) {
             break;
         case 'businessSuccess':
             userState.cash += userState.cash * 0.5;
-            hasBusiness = true;
+            userState.hasBusiness = true;
             break;
         case 'startBusiness':
             userState.cash -= 20000;
-            hasBusiness = true;
+            userState.hasBusiness = true;
             break;
         case 'businessFailure':
             userState.cash -= userState.cash * 0.5;
-            hasBusiness = false;
+            userState.hasBusiness = false;
             break;
         case 'newCar':
             userState.cash -= 30000;
@@ -263,4 +269,16 @@ function displayRandomEvent(event) {
 }
 function closeEvent(){
     document.getElementById('randomEvent').style.display = 'none';
+}
+
+function displayCurrentData(){
+    document.getElementById('age').innerText = userState.age;
+    document.getElementById('cash').innerText = '$' + userState.cash.toLocaleString();
+    document.getElementById('income').innerText = '$' + userState.income.toLocaleString();
+    document.getElementById('expenses').innerText = '$' + userState.expenses.toLocaleString();
+    document.getElementById('investments').innerText = '$' + userState.investments.toLocaleString();
+    document.getElementById('jobStatus').innerText = userState.hasJob ? 'Employed' : 'Unemployed';
+    document.getElementById('relationshipStatus').innerText = userState.relationshipStatus;
+    document.getElementById('kids').innerText = userState.kids;
+    document.getElementById('businessStatus').innerText = userState.hasBusiness ? 'Has Business' : 'No Business';
 }

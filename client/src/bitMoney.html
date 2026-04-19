@@ -8,6 +8,7 @@
 </head>
 <body>
     <currentStatus>
+        <div id = "currentFinances">
         <h2>Current Financial Status:</h2>
         <p>Age: <span id="age">0</span></p>
         <p>Cash: <span id="cash">$0</span></p>
@@ -16,26 +17,29 @@
         <p>Expenses: <span id="expenses">$0</span></p>
         <p>Job Status: <span id="jobStatus">Unemployed</span></p>
         <p>Relationship Status: <span id="relationshipStatus">Single</span></p>
-        <p>Children: <span id="familyMembers">0</span></p>
-
+        <p>Children: <span id="kids">0</span></p>
+        <p>Business Status: <span id="businessStatus">No Business</span></p>
+        </div>
+        <div id = "currentEconomy">
         <h2>Current Economic Status:</h2>
         <p>Inflation Rate: <span id="inflationRate">0</span></p>
         <p>Market Return: <span id="marketReturn">0</span></p>
         <p>Recession: <span id="recession">No</span></p>
+        </div>
     </currentStatus>
     <progression>
-        <h2>What would you like to do (you can pick more than one)?</h2>
+        <h2>What would you like to do? (you can pick more than one)</h2>
         <form id="eventForm">
-            <label><input type="checkbox" value="investMoney">Invest Money</label>
-            <label><input type="checkbox" value="startBusiness">Start a Business</label>
-            <label><input type="checkbox" value="getNewJob">Get a New Job</label>
-            <label><input type="checkbox" value="growFamily">Grow Your Family</label>
-            <label><input type="checkbox" value="getMarried">Get Married</label>
-            <label><input type="checkbox" value="getDivorce">Get a Divorce</label>
+            <label><input type="checkbox" name = "lifeEvent" value="investMoney">Invest Money</label>
+            <label><input type="checkbox" name = "lifeEvent" value="startBusiness">Start a Business</label>
+            <label><input type="checkbox" name = "lifeEvent" value="newJob">Get a New Job</label>
+            <label><input type="checkbox" name = "lifeEvent" value="child">Grow Your Family</label>
+            <label><input type="checkbox" name = "lifeEvent" value="married">Get Married</label>
+            <label><input type="checkbox" name = "lifeEvent" value="divorce">Get a Divorce</label>
         </form>
         <button id="continueButton">Apply Changes</button>
     </progression>
-    <div id="randomEvent" style = "display:none; position: fixed; inset:0; display: flex; align-items:center; justify-content:center;">
+    <div id="randomEvent" style = "display:none; position: fixed; inset:0; align-items:center; justify-content:center;">
         <h3>Life Event: <span id="eventTitle"></span></h3>
         <p id="eventDescription"></p>
         <button id="closeEventButton">Close</button>
