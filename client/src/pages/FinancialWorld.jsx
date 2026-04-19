@@ -126,7 +126,7 @@ export default function FinancialWorld() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <PlaidLink onReady={fn => setOpenPlaid(() => fn)} />
+      <PlaidLink onReady={fn => setOpenPlaid(() => fn)} redirectTo="/world" />
 
       <TopBar
         title="My Financial World"

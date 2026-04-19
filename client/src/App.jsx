@@ -3,7 +3,7 @@ import Sidebar from './components/layout/Sidebar';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Coach from './pages/Coach';
-import JargonDecoder from './pages/JargonDecoder';
+import Dictionary from './pages/Dictionary';
 import TransactionHistory from './pages/TransactionHistory';
 import Simulation from './pages/Simulation';
 import Analyze from './pages/Analyze';
@@ -30,14 +30,10 @@ function Layout() {
           <Route path="/analyze"      element={<Analyze />} />
           <Route path="/world"        element={<FinancialWorld />} />
           <Route path="/coach"        element={<Coach />} />
-          <Route path="/jargon"       element={<JargonDecoder />} />
+          <Route path="/dictionary"   element={<Dictionary />} />
           <Route path="/settings"     element={<SettingsPlaceholder />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/coach"     element={<Coach />} />
-          <Route path="/jargon"    element={<JargonDecoder />} />
-          <Route path="/settings"  element={<SettingsPlaceholder />} />
-          <Route path="/logout"    element={<Logout />} />
-          <Route path="*" element={<Home />} />
+          <Route path="/logout"       element={<Logout />} />
+          <Route path="*"             element={<Home />} />
         </Routes>
       </div>
     </div>

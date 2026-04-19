@@ -10,7 +10,7 @@ const NAV = [
   { id: '/world',        label: 'My Financial World', icon: ICONS.tree },
   { id: '/simulate',    label: 'Simulation',         icon: ICONS.sliders },
   { id: '/coach',        label: 'Coach',            icon: ICONS.coach },
-  { id: '/jargon',       label: 'Jargon Decoder',   icon: ICONS.book },
+  { id: '/dictionary',   label: 'Dictionary',        icon: ICONS.book },
   { id: '/settings',     label: 'Settings',         icon: ICONS.settings },
   { id: '/logout',       label: 'Logout',           icon: ICONS.back },
 ];

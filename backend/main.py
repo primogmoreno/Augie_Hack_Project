@@ -684,5 +684,242 @@ def tree_data():
         return jsonify({'error': 'Failed to compute tree data'}), 500
 
 
+@app.route('/api/plaid/dictionary-context', methods=['GET'])
+def dictionary_context():
+    access_token = session.get('access_token')
+    if not access_token:
+        return jsonify({'error': 'Not connected'}), 401
+    try:
+        accounts_resp  = plaid.get_accounts(access_token)
+        accounts_list  = _serialize(accounts_resp)
+        transactions   = _fetch_transactions_normalized(access_token, 90)
+
+        try:
+            liabilities_resp = plaid.get_liabilities(access_token)
+            liabilities = _serialize(liabilities_resp.to_dict() if hasattr(liabilities_resp, 'to_dict') else liabilities_resp)
+        except Exception:
+            liabilities = {}
+
+        def acc_balance(acc):
+            bal = acc.get('balances', {}) or {}
+            return bal.get('current') or bal.get('available') or 0
+
+        checking_accs = [a for a in accounts_list if a.get('subtype') == 'checking']
+        savings_accs  = [a for a in accounts_list if a.get('subtype') in ('savings', 'money market', 'cd')]
+        credit_accs   = [a for a in accounts_list if a.get('type') == 'credit']
+
+        checking_bal  = sum(acc_balance(a) for a in checking_accs)
+        savings_bal   = sum(acc_balance(a) for a in savings_accs)
+        credit_bal    = sum(acc_balance(a) for a in credit_accs)
+        credit_limit  = sum((a.get('balances', {}) or {}).get('limit') or 0 for a in credit_accs)
+        total_assets  = checking_bal + savings_bal
+
+        debits  = [t for t in transactions if t['type'] == 'debit' and t['category'] != 'Savings & Investing']
+        credits = [t for t in transactions if t['type'] == 'credit']
+        savings_txs = [t for t in transactions if t['category'] == 'Savings & Investing']
+
+        total_income   = abs(sum(t['amount'] for t in credits))
+        total_spending = sum(t['amount'] for t in debits)
+        monthly_income = total_income / 3.0 if total_income > 0 else 0
+        monthly_expenses = total_spending / 3.0
+
+        savings_rate_pct = round((sum(t['amount'] for t in savings_txs) / 3.0 / monthly_income * 100), 1) if monthly_income > 0 else 0
+
+        credit_liabilities = liabilities.get('credit', []) or []
+        avg_apr = 0
+        if credit_liabilities:
+            aprs = []
+            for cl in credit_liabilities:
+                for apr_item in (cl.get('aprs') or []):
+                    v = apr_item.get('apr_percentage')
+                    if v:
+                        aprs.append(v)
+            avg_apr = round(sum(aprs) / len(aprs), 1) if aprs else 0
+
+        cu_avg_apr   = 13.2
+        annual_savings = round((avg_apr - cu_avg_apr) / 100 * credit_bal) if avg_apr > cu_avg_apr and credit_bal > 0 else 0
+
+        utilization_pct = round(credit_bal / credit_limit * 100) if credit_limit > 0 else 0
+        amount_to_reduce = max(0, round(credit_bal - credit_limit * 0.30)) if credit_limit > 0 else 0
+
+        monthly_debt_payments = credit_bal * (avg_apr / 100 / 12) + (credit_bal * 0.01) if credit_bal > 0 else 0
+        dti_pct = round(monthly_debt_payments / monthly_income * 100, 1) if monthly_income > 0 else 0
+
+        ef_months = round(savings_bal / monthly_expenses, 1) if monthly_expenses > 0 else 0
+        target_min = round(monthly_expenses * 3)
+        target_max = round(monthly_expenses * 6)
+        ef_gap = max(0, target_min - savings_bal)
+
+        savings_interest_rate = 0.0001
+        monthly_interest_current = round(savings_bal * savings_interest_rate / 12, 2)
+        monthly_interest_hys     = round(savings_bal * 0.048 / 12, 2)
+
+        cat_sums = {}
+        for t in debits:
+            cat_sums[t['category']] = cat_sums.get(t['category'], 0) + t['amount']
+        top_cat = max(cat_sums, key=cat_sums.get) if cat_sums else 'Food & Dining'
+        top_over_amount = round(cat_sums.get(top_cat, 0) / 3) if cat_sums else 0
+
+        needs_pct   = 52
+        wants_pct   = 38
+        savings_pct = 10
+
+        checking_name = checking_accs[0].get('name', 'Checking') if checking_accs else 'Checking'
+        checking_mask = checking_accs[0].get('mask', '????') if checking_accs else '????'
+        tx_count_30   = len([t for t in transactions if t['type'] == 'debit' or t['type'] == 'credit'])
+
+        direct_deposits = [t for t in credits if any(w in t.get('name', '').upper() for w in ('PAYROLL', 'DIRECT DEP', 'ADP', 'GUSTO', 'SALARY'))]
+        detected_dd = len(direct_deposits) > 0
+        dd_amount   = round(abs(direct_deposits[0]['amount'])) if direct_deposits else 0
+        dd_source   = direct_deposits[0].get('name', 'EMPLOYER') if direct_deposits else ''
+
+        overdraft_txs   = [t for t in debits if 'OVERDRAFT' in t.get('name', '').upper() or 'NSF' in t.get('name', '').upper()]
+        overdraft_fees  = round(sum(t['amount'] for t in overdraft_txs))
+
+        estimated_annual = round(monthly_income * 12)
+        bracket = '12%' if estimated_annual < 47150 else ('22%' if estimated_annual < 100525 else ('24%' if estimated_annual < 191950 else '32%'))
+        effective_est = f"{round((0.10 * 11600 + 0.12 * max(0, min(estimated_annual, 47150) - 11600) + 0.22 * max(0, estimated_annual - 47150)) / max(1, estimated_annual) * 100, 1)}%"
+
+        min_payment_est = round(max(25, credit_bal * 0.02)) if credit_bal > 0 else 0
+        suggested_payment = round(credit_bal * 0.07) if credit_bal > 0 else 0
+        months_at_min = 0
+        if credit_bal > 0 and avg_apr > 0:
+            monthly_rate = avg_apr / 100 / 12
+            bal = credit_bal
+            m = 0
+            while bal > 1 and m < 600:
+                interest = bal * monthly_rate
+                principal = min_payment_est - interest
+                if principal <= 0:
+                    m = 600
+                    break
+                bal -= principal
+                m += 1
+            months_at_min = m
+        months_at_suggested = 0
+        if credit_bal > 0 and avg_apr > 0 and suggested_payment > 0:
+            monthly_rate = avg_apr / 100 / 12
+            bal = credit_bal
+            m = 0
+            while bal > 1 and m < 600:
+                interest = bal * monthly_rate
+                principal = suggested_payment - interest
+                if principal <= 0:
+                    m = 600
+                    break
+                bal -= principal
+                m += 1
+            months_at_suggested = m
+        interest_at_min  = round(months_at_min * min_payment_est - credit_bal) if months_at_min > 0 else 0
+        interest_saved   = max(0, interest_at_min - round(months_at_suggested * suggested_payment - credit_bal)) if months_at_suggested > 0 else 0
+
+        net_worth = round(total_assets - credit_bal)
+
+        return jsonify({
+            'checking': {
+                'accountName':          checking_name,
+                'lastFourDigits':       checking_mask,
+                'transactionCount30Days': tx_count_30,
+                'averageBalance':       round(checking_bal),
+            },
+            'savings': {
+                'balance':               round(savings_bal),
+                'interestRatePercent':   savings_interest_rate * 100,
+                'hysSuggestedRate':      4.8,
+                'monthlyInterestCurrent': monthly_interest_current,
+                'monthlyInterestHYS':    monthly_interest_hys,
+            },
+            'directDeposit': {
+                'detected':      detected_dd,
+                'amount':        dd_amount,
+                'frequencyDays': 14,
+                'sourceName':    dd_source,
+            },
+            'overdraft': {
+                'incidentsLast90Days': len(overdraft_txs),
+                'feesPaidLast90Days':  overdraft_fees,
+            },
+            'balance': {
+                'checking':    round(checking_bal),
+                'savings':     round(savings_bal),
+                'totalAssets': round(total_assets),
+            },
+            'apr': {
+                'userAPR':              avg_apr,
+                'creditUnionAverage':   cu_avg_apr,
+                'bankAverage':          21.5,
+                'userBalance':          round(credit_bal),
+                'annualSavingsIfSwitched': annual_savings,
+            },
+            'creditScore': {'connected': False},
+            'utilization': {
+                'estimatedPercent': utilization_pct,
+                'recommendedMax':   30,
+                'currentBalance':   round(credit_bal),
+                'creditLimit':      round(credit_limit),
+                'amountToReduce':   amount_to_reduce,
+            },
+            'minPayment': {
+                'estimatedMinimum':       min_payment_est,
+                'suggestedPayment':       suggested_payment,
+                'monthsAtMin':            months_at_min,
+                'monthsAtSuggested':      months_at_suggested,
+                'interestSavedAtSuggested': interest_saved,
+            },
+            'debtToIncome': {
+                'monthlyDebtPayments': round(monthly_debt_payments),
+                'monthlyGrossIncome':  round(monthly_income),
+                'ratio':               round(dti_pct / 100, 3),
+                'ratioPercent':        dti_pct,
+                'benchmark':           36,
+            },
+            'emergencyFund': {
+                'monthsEstimate':    ef_months,
+                'monthlyEssentials': round(monthly_expenses),
+                'targetMin':         target_min,
+                'targetMax':         target_max,
+                'currentSavings':    round(savings_bal),
+                'gapToTarget':       round(ef_gap),
+            },
+            'spending': {
+                'needsPercent':      needs_pct,
+                'wantsPercent':      wants_pct,
+                'savingsPercent':    savings_pct,
+                'topOverCategory':   top_cat,
+                'topOverAmount':     top_over_amount,
+            },
+            'savingsRate': {
+                'userRate':         savings_rate_pct,
+                'nationalAverage':  3.8,
+                'recommendedMin':   20,
+            },
+            'netWorth': {
+                'totalAssets':      round(total_assets),
+                'totalLiabilities': round(credit_bal),
+                'netWorth':         net_worth,
+            },
+            'income': {
+                'estimatedAnnual':       estimated_annual,
+                'estimatedMonthly':      round(monthly_income),
+                'likelyBracket':         bracket,
+                'effectiveRateEstimate': effective_est,
+                'incomeType':            'W-2',
+            },
+            'retirement401k': {'connected': False},
+        })
+    except Exception as e:
+        print('dictionary-context error', e)
+        import traceback; traceback.print_exc()
+        return jsonify({'error': 'Failed to fetch context'}), 500
+
+
+@app.route('/api/milestones/unlock', methods=['POST'])
+def unlock_milestone():
+    data = request.get_json() or {}
+    milestone_id = data.get('milestoneId', '')
+    print(f'Milestone unlocked: {milestone_id}')
+    return jsonify({'ok': True})
+
+
 if __name__ == "__main__":
     app.run(port=5000)

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { usePlaidLink } from 'react-plaid-link';
 import api from '../../services/api';
 
-export default function PlaidLink({ onReady }) {
+export default function PlaidLink({ onReady, redirectTo = '/dashboard' }) {
   const [linkToken, setLinkToken] = useState(null);
   const [fetchError, setFetchError] = useState(null);
   const fetchLinkToken = useCallback(() => {
@@ -27,11 +27,11 @@ export default function PlaidLink({ onReady }) {
   const onSuccess = useCallback(async (public_token) => {
     try {
       await api.post('/exchange_public_token', { public_token });
-      window.location.href = '/dashboard';
+      window.location.href = redirectTo;
     } catch (err) {
       console.error('Token exchange failed:', err);
     }
-  }, []);
+  }, [redirectTo]);
 
   const { open, ready } = usePlaidLink({ token: linkToken ?? '', onSuccess });
 
