@@ -8,11 +8,30 @@ import Icon, { ICONS } from '../components/ui/Icon';
 import RateRealityCheck from '../components/dashboard/RateRealityCheck';
 import Explainer from '../components/dashboard/Explainer';
 import api from '../services/api';
+import PlaidLink from '../components/plaid/PlaidLinkButton';
 
 const FALLBACK_ACCOUNTS = [
-  { name: 'Checking', bank: 'Harbor CU ••5521', bal: 4218.47,  delta: '+$182 this week', tone: 'success' },
-  { name: 'Savings',  bank: 'Harbor CU ••8840', bal: 6820.00,  delta: '68% to goal',     tone: 'primary' },
-  { name: 'Credit',   bank: 'Visa ••2207',       bal: -1284.55, delta: '41% utilization', tone: 'warning' },
+  {
+    name: "Checking",
+    bank: "Harbor CU ••5521",
+    bal: 4218.47,
+    delta: "+$182 this week",
+    tone: "success",
+  },
+  {
+    name: "Savings",
+    bank: "Harbor CU ••8840",
+    bal: 6820.0,
+    delta: "68% to goal",
+    tone: "primary",
+  },
+  {
+    name: "Credit",
+    bank: "Visa ••2207",
+    bal: -1284.55,
+    delta: "41% utilization",
+    tone: "warning",
+  },
 ];
 
 const FALLBACK_TXS = [
@@ -36,11 +55,12 @@ function mapPlaidAccounts(accounts, liabilities) {
       const cc = creditCards.find(c => c.account_id === acct.account_id);
       const utilization = cc && acct.balances.limit ? Math.round((bal / acct.balances.limit) * 100) : null;
       result.push({
-        name: 'Credit',
+        name: "Credit",
         bank: `${acct.name} ••${acct.mask}`,
         bal: -bal,
-        delta: utilization !== null ? `${utilization}% utilization` : 'Connected',
-        tone: utilization > 30 ? 'warning' : 'success',
+        delta:
+          utilization !== null ? `${utilization}% utilization` : "Connected",
+        tone: utilization > 30 ? "warning" : "success",
       });
     }
   }
@@ -51,8 +71,10 @@ function extractCreditInfo(accounts, liabilities) {
   const creditCards = liabilities?.credit ?? [];
   if (!creditCards.length) return { apr: 21.99, balance: 1284.55 };
   const cc = creditCards[0];
-  const apr = cc.aprs?.find(a => a.apr_type === 'purchase_apr')?.apr_percentage ?? 21.99;
-  const acct = accounts.find(a => a.account_id === cc.account_id);
+  const apr =
+    cc.aprs?.find((a) => a.apr_type === "purchase_apr")?.apr_percentage ??
+    21.99;
+  const acct = accounts.find((a) => a.account_id === cc.account_id);
   const balance = acct?.balances?.current ?? 1284.55;
   return { apr: parseFloat(apr.toFixed(2)), balance: parseFloat(balance.toFixed(2)) };
 }
@@ -116,18 +138,22 @@ export default function Dashboard() {
   const [creditInfo, setCreditInfo]   = useState({ apr: 21.99, balance: 1284.55 });
   const [recentTxs, setRecentTxs]     = useState(FALLBACK_TXS);
   const [summary, setSummary]         = useState(null);
+  const [openPlaid, setOpenPlaid]     = useState(null);
   const [showExplainer, setShowExplainer] = useState(false);
+  const [cachePlaid, setCachePlaid] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/accounts')
-      .then(({ data }) => {
+    api
+      .get("/accounts")
+      .then(({ data }) => { 
         setAccounts(mapPlaidAccounts(data.accounts, data.liabilities));
         setCreditInfo(extractCreditInfo(data.accounts, data.liabilities));
       })
       .catch(() => {});
 
-    api.get('/transactions')
+    api
+      .get("/transactions")
       .then(({ data }) => {
         if (data.pending || !data.transactions?.length) return;
         const iconFor = (cat) => {
@@ -165,34 +191,82 @@ export default function Dashboard() {
   })();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        position: "relative",
+      }}
+    >
+      <PlaidLink onReady={(openFn) => setOpenPlaid(() => openFn)} /> 
       <TopBar
         title={greeting}
+      
         subtitle="Here's where things stand."
         right={
-          <Button variant="secondary" size="sm">
+          
+          <Button variant="secondary" size="sm" onClick={() => openPlaid?.()}>
+        
             <Icon d={ICONS.plus} size={14} /> Add account
           </Button>
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--ink-0)' }}>
-
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "28px 40px 60px",
+          background: "var(--ink-0)",
+        }}
+      >
         {/* Account cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 14,
+            marginBottom: 24,
+          }}
+        >
           {accounts.map((a, i) => (
             <Card key={i} style={{ padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-2)' }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "var(--fg-2)",
+                  }}
+                >
                   {a.name}
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--fg-3)' }}>{a.bank}</span>
+                <span style={{ fontSize: 11, color: "var(--fg-3)" }}>
+                  {a.bank}
+                </span>
               </div>
-              <div className="money" style={{
-                fontSize: 28, fontWeight: 500, margin: '10px 0',
-                color: a.bal < 0 ? 'var(--danger)' : 'var(--fg-1)',
-              }}>
-                {a.bal < 0 ? '−' : ''}${Math.abs(a.bal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <div
+                className="money"
+                style={{
+                  fontSize: 28,
+                  fontWeight: 500,
+                  margin: "10px 0",
+                  color: a.bal < 0 ? "var(--danger)" : "var(--fg-1)",
+                }}
+              >
+                {a.bal < 0 ? "−" : ""}$
+                {Math.abs(a.bal).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}
               </div>
               <Badge tone={a.tone}>{a.delta}</Badge>
             </Card>
@@ -222,26 +296,55 @@ export default function Dashboard() {
         )}
 
         {/* AI Insight hero */}
-        <Card style={{
-          background: 'linear-gradient(180deg, var(--amber-50) 0%, #fff 70%)',
-          borderColor: 'color-mix(in srgb, var(--amber-400) 35%, var(--border-1))',
-          padding: 24,
-          marginBottom: 24,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-              background: 'linear-gradient(135deg, var(--amber-300), var(--amber-400))',
-              color: 'var(--ink-800)', display: 'grid', placeItems: 'center', fontWeight: 700,
-            }}>✦</div>
+        <Card
+          style={{
+            background: "linear-gradient(180deg, var(--amber-50) 0%, #fff 70%)",
+            borderColor:
+              "color-mix(in srgb, var(--amber-400) 35%, var(--border-1))",
+            padding: 24,
+            marginBottom: 24,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                flexShrink: 0,
+                background:
+                  "linear-gradient(135deg, var(--amber-300), var(--amber-400))",
+                color: "var(--ink-800)",
+                display: "grid",
+                placeItems: "center",
+                fontWeight: 700,
+              }}
+            >
+              ✦
+            </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--amber-500)', marginBottom: 8 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  color: "var(--amber-500)",
+                  marginBottom: 8,
+                }}
+              >
                 This week's insight
               </div>
-              <p style={{
-                fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500,
-                lineHeight: 1.3, color: 'var(--fg-1)', marginBottom: 14,
-              }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 22,
+                  fontWeight: 500,
+                  lineHeight: 1.3,
+                  color: "var(--fg-1)",
+                  marginBottom: 14,
+                }}
+              >
                 {creditInfo.apr > 15
                   ? `Your credit card APR is ${creditInfo.apr}% — that's above the national credit union average. Here's what to do.`
                   : summary
@@ -261,7 +364,10 @@ export default function Dashboard() {
 
         {/* Rate Reality Check */}
         <div style={{ marginBottom: 24 }}>
-          <RateRealityCheck userApr={creditInfo.apr} userBalance={creditInfo.balance} />
+          <RateRealityCheck
+            userApr={creditInfo.apr}
+            userBalance={creditInfo.balance}
+          />
         </div>
 
         {/* Spending breakdown + Activity */}
@@ -304,12 +410,32 @@ export default function Dashboard() {
               const pct = Math.min(100, (b.spent / b.cap) * 100);
               return (
                 <div key={b.name} style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: 13,
+                      marginBottom: 6,
+                    }}
+                  >
                     <span style={{ fontWeight: 500 }}>{b.name}</span>
                     <span className="money" style={{ color: 'var(--fg-2)' }}>${b.spent} / ${b.cap}</span>
                   </div>
-                  <div style={{ height: 6, background: 'var(--ink-100)', borderRadius: 999 }}>
-                    <div style={{ width: `${pct}%`, height: '100%', background: b.color, borderRadius: 999 }} />
+                  <div
+                    style={{
+                      height: 6,
+                      background: "var(--ink-100)",
+                      borderRadius: 999,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${pct}%`,
+                        height: "100%",
+                        background: b.color,
+                        borderRadius: 999,
+                      }}
+                    />
                   </div>
                 </div>
               );
@@ -322,25 +448,61 @@ export default function Dashboard() {
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, margin: 0 }}>Recent activity</h3>
               <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')}>See all</Button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {recentTxs.map((t, i) => (
-                <div key={i} style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
-                  borderBottom: i < recentTxs.length - 1 ? '1px solid var(--border-1)' : 0,
-                }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    background: 'var(--ink-50)', color: 'var(--fg-2)',
-                    display: 'grid', placeItems: 'center', flexShrink: 0,
-                  }}>
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 0",
+                    borderBottom:
+                      i < recentTxs.length - 1
+                        ? "1px solid var(--border-1)"
+                        : 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: "var(--ink-50)",
+                      color: "var(--fg-2)",
+                      display: "grid",
+                      placeItems: "center",
+                      flexShrink: 0,
+                    }}
+                  >
                     <Icon d={t.icon} size={16} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--fg-3)' }}>{t.sub} · {t.tag}</div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 500,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {t.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--fg-3)" }}>
+                      {t.sub} · {t.tag}
+                    </div>
                   </div>
-                  <div className="money" style={{ fontSize: 14, fontWeight: 500, color: t.pos ? 'var(--success)' : 'var(--fg-1)', flexShrink: 0 }}>
-                    {t.pos ? '+' : '−'}${Math.abs(t.amt).toFixed(2)}
+                  <div
+                    className="money"
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: t.pos ? "var(--success)" : "var(--fg-1)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {t.pos ? "+" : "−"}${Math.abs(t.amt).toFixed(2)}
                   </div>
                 </div>
               ))}

@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { usePlaidLink } from 'react-plaid-link';
 import api from '../../services/api';
 
-export default function PlaidLink() {
+export default function PlaidLink({ onReady }) {
   const [linkToken, setLinkToken] = useState(null);
   const [fetchError, setFetchError] = useState(null);
   const navigate = useNavigate();
-
   const fetchLinkToken = useCallback(() => {
     setFetchError(null);
     setLinkToken(null);
@@ -55,7 +54,15 @@ export default function PlaidLink() {
   }
 
   const isReady = ready && !!linkToken;
+   useEffect(() => {
+    if (ready && linkToken && onReady) {
+      onReady(open);
+    }
+  }, [ready, linkToken]);
 
+  // if onReady is passed, render nothing (parent controls button)
+  // otherwise render the button as before
+  if (onReady) return null;
   return (
     <button
       onClick={() => open()}
