@@ -9,14 +9,21 @@ import Simulation from './pages/Simulation';
 import Analyze from './pages/Analyze';
 import FinancialWorld from './pages/FinancialWorld';
 import {Login,Logout} from './pages/Login';
+import OnboardingSurvey from './pages/onboarding/OnboardingSurvey';
 
+const NO_SIDEBAR_PATHS = ['/', '/onboarding/survey'];
 
 function Layout() {
   const location = useLocation();
   const isHome = location.pathname === '/';
+  const hideSidebar = NO_SIDEBAR_PATHS.includes(location.pathname);
 
   if (isHome) {
     return <Login />;
+  }
+
+  if (location.pathname === '/onboarding/survey') {
+    return <OnboardingSurvey />;
   }
 
   return (

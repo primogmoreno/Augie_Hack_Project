@@ -41,9 +41,15 @@ export default function TransactionHistory() {
       const summary = sumRes.data.pending ? null : sumRes.data;
       if (transactions.length) setTransactions(transactions);
       if (summary) setSummary(summary);
-      return { transactions, summary }; // return so useEffect can cache it
-    } catch {
-      setError("Failed to load transactions. Please try again.");
+      setIsConnected(true);
+      return { transactions, summary };
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setIsConnected(false);
+      } else {
+        setIsConnected(true);
+        setError("Failed to load transactions. Please try again.");
+      }
       return null;
     } finally {
       setLoading(false);
@@ -56,12 +62,11 @@ export default function TransactionHistory() {
       setTransactions(cached.transactions ?? []);
       setSummary(cached.summary);
       setIsConnected(true);
-      return; // skip fetch if cache is fresh
-    } 
+      return;
+    }
     fetchData(dateRange).then((data) => {
       if (data) cacheSet(`transactions_${dateRange}`, data);
     });
-    setIsConnected(true); // if fetchData doesn't throw, we're connected. If not, error state will show.
   }, [dateRange]);
 
 

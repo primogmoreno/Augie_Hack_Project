@@ -52,7 +52,9 @@ function Login() {
         email: user.email,
         displayName: user.displayName,
       }));
-      navigate("/dashboard");
+      // Route to survey if not yet completed, otherwise dashboard
+      const surveyCompleted = user.surveyCompleted ?? true; // existing users skip survey
+      navigate(surveyCompleted ? "/dashboard" : "/onboarding/survey");
     }
   }, [user, isRegistered]);
 
@@ -77,7 +79,8 @@ function Login() {
       const existingUser = snap.docs.find((d) => d.data().email === emailKey);
       if (existingUser) {
         setIsRegistered(true);
-        navigate("/dashboard");
+        const surveyCompleted = existingUser.data().surveyCompleted ?? true;
+        navigate(surveyCompleted ? "/dashboard" : "/onboarding/survey");
       }
       sessionStorage.setItem(
         "user",
@@ -107,10 +110,12 @@ function Login() {
         email: emailKey,
         phone: phoneNumber,
         createdAt: new Date(),
+        surveyCompleted: false,
+        onboardingComplete: false,
       });
 
       setIsRegistered(true);
-      navigate("/dashboard");
+      navigate("/onboarding/survey");
     } catch (err) {
       console.error("Registration error:", err);
       alert("Something went wrong. Please try again.");

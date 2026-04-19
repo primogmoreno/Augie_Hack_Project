@@ -19,12 +19,12 @@ export default function useAuth() {
         unsubscribeSnapshot = onSnapshot(userRef, (userSnap) => {
           const exists = userSnap.exists();
 
-          console.log("useAuth - Exists:", exists);
-
           setUser({
             uid: currentUser.uid,
             email: currentUser.email,
             displayName: currentUser.displayName,
+            // Merge Firestore document fields so surveyCompleted is accessible
+            ...(exists ? userSnap.data() : {}),
           });
 
           setIsRegistered(exists);
