@@ -4,35 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
-    <link rel="stylesheet" href="styles.css"> 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <script src="simulation.js"></script>
 </head>
 <body>
+  <section id="welcome-section">
     <h1>Welcome to the Simulation</h1>
     <p>Please respond to the following prompts as best you can.</p>
-
-    <h3>But First...</h3>
+  </section>
+  <section id="income">
+     <h3>But First...</h3>
 <p>Tell us how much you make in a month</p>
 
-<div>
-  <label>Monthly Income</label><br>
-  <input type="range" id="income-slider" min="0" max="20000" step="100" value="4000"
-    oninput="incomeText.value=this.value; calcTotal()">
-  <span>$</span><input type="text" id="monthlyIncome" value="4000" style="width:80px"
-    oninput="incomeSlider.value=this.value||0; calcTotal()">
+<div class="form-group">
+  <label for="monthlyIncome">Monthly Income</label>
+  <div style="display: flex; align-items: center; gap: 1rem;">
+    <span style="font-size: 1.2rem; font-weight: 600; color: #667eea;">$</span>
+    <input type="range" id="income-slider" min="0" max="20000" step="100" value="4000"
+    oninput="document.getElementById('monthlyIncome').value=this.value; calcTotal()">
+    <input type="text" id="monthlyIncome" value="4000" style="width:100px; text-align: center;"
+      oninput="document.getElementById('income-slider').value=this.value||0; calcTotal()">
+  </div>
 </div>
 
 <p>How much do you put into savings each month?</p>
 
-<div>
-  <label>Monthly Savings</label><br>
-  <span>$</span><input type="number" id="monthlySavings" min="0" step="10" value="400" style="width:80px"
-    oninput="calcTotal()">
+<div class="form-group">
+  <label for="monthlySavings">Monthly Savings</label>
+  <div style="display: flex; align-items: center; gap: 0.5rem;">
+    <span style="font-size: 1.2rem; font-weight: 600; color: #667eea;">$</span>
+    <input type="number" id="monthlySavings" min="0" step="10" value="400"
+      oninput="calcTotal()">
+  </div>
 </div>
-
+  </section>
+   
+<section id="expenses">
 <h3>Now, let's talk about your expenses...</h3>
 <p>How much do you spend in a month on the following categories?</p>
 
+<div class="form-group">
 <table>
   <tbody id="expense-body">
     <tr><td>Housing (Rent, Mortgage, Property Tax, etc)</td><td>$<input type="number" id="housing" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
@@ -40,28 +54,39 @@
     <tr><td>Insurance (Health, Life, Auto, Home, etc)</td><td>$<input type="number" id="insurance" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
     <tr><td>Transportation (Car Payment, Gas, Bus Pass, etc)</td><td>$<input type="number" id="transportation" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
     <tr><td>Utilities (Electricity, Water, Internet, etc)</td><td>$<input type="number" id="utilities" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
-    <tr><td>Food (Groceries, Dining Out)</td><td>$<input type="number" id="food" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
+    <tr><td>Food (Groceries, but not dining out)</td><td>$<input type="number" id="food" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
     <tr><td>Entertainment (Streaming, Movies, Going out, etc)</td><td>$<input type="number" id="entertainment" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
     <tr><td>Clothing (Shirts, Pants, Shoes, etc)</td><td>$<input type="number" id="clothing" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
     <tr><td>Other Expenses</td><td>$<input type="number" id="otherExpenses" class="expense" min="0" step="10" placeholder="0" oninput="calcTotal()"></td></tr>
   </tbody>
   <tfoot>
-    <tr style="border-top: 2px solid #000; font-weight: bold;">
+    <tr style="border-top: 2px solid #4a5568; font-weight: bold; background: rgba(74, 85, 104, 0.1);">
       <td>Total Monthly Expenses</td>
       <td>$<span id="expense-total">0</span></td>
     </tr>
-    <tr>
+    <tr style="background: rgba(74, 85, 104, 0.05);">
       <td>Monthly Income After Savings & Expenses</td>
       <td id="remaining-label">$<span id="remaining">0</span></td>
     </tr>
   </tfoot>
 </table>
-
+</div>
+</section>
+<section id="submit-section">
     <h3>Thank you for your responses!</h3>
-    
+
     <p>Click the button below to see how your responses compare to your financial statements</p>
     <button onclick="submit()">See Results</button>
+</section>
+
+<!-- Scroll Navigation Indicators -->
+<div class="scroll-indicator">
+  <div class="scroll-dot active" data-section="welcome-section"></div>
+  <div class="scroll-dot" data-section="income"></div>
+  <div class="scroll-dot" data-section="expenses"></div>
+  <div class="scroll-dot" data-section="submit-section"></div>
+</div>
+
 </body>
 <script src="simulation.js"></script>
 </html>
-

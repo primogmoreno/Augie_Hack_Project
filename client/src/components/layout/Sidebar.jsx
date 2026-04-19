@@ -6,6 +6,7 @@ const NAV = [
   { id: '/',            label: 'Home',             icon: ICONS.home },
   { id: '/dashboard',   label: 'Dashboard',        icon: ICONS.chart },
   { id: '/transactions',label: 'Transactions',     icon: ICONS.list },
+  { id: '/simulate',    label: 'Simulation',       icon: ICONS.sliders },
   { id: '/coach',       label: 'Coach',            icon: ICONS.coach },
   { id: '/jargon',      label: 'Jargon Decoder',   icon: ICONS.book },
   { id: '/settings',    label: 'Settings',         icon: ICONS.settings },

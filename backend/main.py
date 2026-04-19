@@ -411,5 +411,52 @@ def gemini_chat():
         print('gemini chat error', e)
         return jsonify({'error': 'Gemini request failed'}), 500
 
+@app.route('/api/gemini/simulate-tips', methods=['POST'])
+def simulate_tips():
+    err = _require_gemini()
+    if err: return err
+    import re
+    data       = request.json or {}
+    answers    = data.get('answers', {})
+    user_needs    = data.get('userNeeds', 0)
+    user_wants    = data.get('userWants', 0)
+    user_savings  = data.get('userSavings', 0)
+    typ_needs     = data.get('typicalNeeds', 0)
+    typ_wants     = data.get('typicalWants', 0)
+    typ_savings   = data.get('typicalSavings', 0)
+    prompt = f"""You are a friendly financial coach reviewing someone's self-reported monthly budget.
+Give 3–5 concise, specific, actionable tips — plain English, no jargon.
+
+Their budget:
+- Monthly Income: ${answers.get('monthlyIncome', 0)}
+- Savings: ${answers.get('monthlySavings', 0)}
+- Housing: ${answers.get('housing', 0)}
+- Loans: ${answers.get('loans', 0)}
+- Insurance: ${answers.get('insurance', 0)}
+- Transportation: ${answers.get('transportation', 0)}
+- Utilities: ${answers.get('utilities', 0)}
+- Food: ${answers.get('food', 0)}
+- Entertainment: ${answers.get('entertainment', 0)}
+- Clothing: ${answers.get('clothing', 0)}
+- Other: ${answers.get('otherExpenses', 0)}
+
+50/30/20 guideline for their income:
+  Needs (50%): ${typ_needs:.0f} — they spend ${user_needs:.0f}
+  Wants (30%): ${typ_wants:.0f} — they spend ${user_wants:.0f}
+  Savings (20%): ${typ_savings:.0f} — they save ${user_savings:.0f}
+
+Return ONLY a JSON array of tip strings, e.g. ["Tip one.", "Tip two."]"""
+    try:
+        response = gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+        match = re.search(r'\[.*?\]', response.text, re.DOTALL)
+        if match:
+            tips = json.loads(match.group())
+        else:
+            tips = [t.strip().lstrip('•-0123456789. ') for t in response.text.split('\n') if len(t.strip()) > 15]
+        return jsonify({'tips': tips[:5]})
+    except Exception as e:
+        print('gemini simulate-tips error', e)
+        return jsonify({'error': 'Gemini request failed'}), 500
+
 if __name__ == "__main__":
     app.run(port=5000)

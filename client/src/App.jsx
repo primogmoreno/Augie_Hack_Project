@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Coach from './pages/Coach';
 import JargonDecoder from './pages/JargonDecoder';
 import TransactionHistory from './pages/TransactionHistory';
+import Simulation from './pages/Simulation';
 
 function Layout() {
   const location = useLocation();
@@ -21,6 +22,7 @@ function Layout() {
         <Routes>
           <Route path="/dashboard"    element={<Dashboard />} />
           <Route path="/transactions" element={<TransactionHistory />} />
+          <Route path="/simulate"     element={<Simulation />} />
           <Route path="/coach"        element={<Coach />} />
           <Route path="/jargon"       element={<JargonDecoder />} />
           <Route path="/settings"     element={<SettingsPlaceholder />} />
