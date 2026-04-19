@@ -3,16 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "client",
-    "server"
+    "client"
   ],
   "scripts": {
-    "dev": "concurrently --names \"server,client\" --prefix-colors \"blue,cyan\" \"yarn workspace finlit-server dev\" \"yarn workspace finlit-client dev\"",
-    "install:all": "yarn install",
-    "build": "yarn workspace finlit-client build",
-    "start": "yarn workspace finlit-server start"
+    "dev": "concurrently --names \"backend,client\" --prefix-colors \"blue,cyan\" \"yarn backend\" \"yarn workspace finlit-client dev\"",
+    "backend": "./venv/Scripts/python.exe ./backend/main.py",
+    "install:all": "yarn install && pip install -r requirements.txt",
+    "build": "yarn workspace finlit-client build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "firebase": "^12.12.0"
   }
 }

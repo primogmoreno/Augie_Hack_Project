@@ -25,7 +25,7 @@ export default function RateRealityCheck({ userApr = 21.99, userBalance = 1284.5
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/rates/ncua')
+    api.get('/rates')
       .then(({ data }) => {
         if (data.series?.length) {
           setSeries(data.series);

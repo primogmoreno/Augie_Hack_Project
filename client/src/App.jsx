@@ -4,13 +4,19 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Coach from './pages/Coach';
 import JargonDecoder from './pages/JargonDecoder';
+import TransactionHistory from './pages/TransactionHistory';
+import Simulation from './pages/Simulation';
+import Analyze from './pages/Analyze';
+import FinancialWorld from './pages/FinancialWorld';
+import {Login,Logout} from './pages/Login';
+
 
 function Layout() {
   const location = useLocation();
   const isHome = location.pathname === '/';
 
   if (isHome) {
-    return <Home />;
+    return <Login />;
   }
 
   return (
@@ -18,10 +24,20 @@ function Layout() {
       <Sidebar />
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <Routes>
+          <Route path="/dashboard"    element={<Dashboard />} />
+          <Route path="/transactions" element={<TransactionHistory />} />
+          <Route path="/simulate"     element={<Simulation />} />
+          <Route path="/analyze"      element={<Analyze />} />
+          <Route path="/world"        element={<FinancialWorld />} />
+          <Route path="/coach"        element={<Coach />} />
+          <Route path="/jargon"       element={<JargonDecoder />} />
+          <Route path="/settings"     element={<SettingsPlaceholder />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/coach"     element={<Coach />} />
           <Route path="/jargon"    element={<JargonDecoder />} />
           <Route path="/settings"  element={<SettingsPlaceholder />} />
+          <Route path="/logout"    element={<Logout />} />
+          <Route path="*" element={<Home />} />
         </Routes>
       </div>
     </div>

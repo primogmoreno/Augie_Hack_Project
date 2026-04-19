@@ -9,3 +9,5 @@ client/dist/
 client/.env
 server/.env
 venv
+*.pyc
+__pycache__/

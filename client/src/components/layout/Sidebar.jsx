@@ -3,11 +3,16 @@ import Logo from '../ui/Logo';
 import Icon, { ICONS } from '../ui/Icon';
 
 const NAV = [
-  { id: '/',          label: 'Home',          icon: ICONS.home },
-  { id: '/dashboard', label: 'Dashboard',     icon: ICONS.chart },
-  { id: '/coach',     label: 'Coach',         icon: ICONS.coach },
-  { id: '/jargon',    label: 'Jargon Decoder', icon: ICONS.book },
-  { id: '/settings',  label: 'Settings',      icon: ICONS.settings },
+  { id: '/',             label: 'Home',             icon: ICONS.home },
+  { id: '/dashboard',    label: 'Dashboard',        icon: ICONS.chart },
+  { id: '/transactions', label: 'Transactions',     icon: ICONS.list },
+  { id: '/analyze',      label: 'Analyze',          icon: ICONS.zap },
+  { id: '/world',        label: 'My Financial World', icon: ICONS.tree },
+  { id: '/simulate',    label: 'Simulation',         icon: ICONS.sliders },
+  { id: '/coach',        label: 'Coach',            icon: ICONS.coach },
+  { id: '/jargon',       label: 'Jargon Decoder',   icon: ICONS.book },
+  { id: '/settings',     label: 'Settings',         icon: ICONS.settings },
+  { id: '/logout',       label: 'Logout',           icon: ICONS.back },
 ];
 
 export default function Sidebar() {

@@ -1,50 +1,87 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePlaidLink } from 'react-plaid-link';
-import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
-export default function PlaidLinkButton() {
+export default function PlaidLink({ onReady }) {
   const [linkToken, setLinkToken] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [fetchError, setFetchError] = useState(null);
+  const fetchLinkToken = useCallback(() => {
+    setFetchError(null);
+    setLinkToken(null);
+    api.post('/create_link_token')
+      .then(res => {
+        if (res.data.link_token) {
+          setLinkToken(res.data.link_token);
+        } else {
+          setFetchError(res.data.error ?? 'No link token returned.');
+        }
+      })
+      .catch(err => {
+        const msg = err.response?.data?.error ?? err.message ?? 'Failed to start connection.';
+        setFetchError(msg);
+      });
+  }, []);
 
-  const fetchLinkToken = async () => {
-    setLoading(true);
+  useEffect(() => { fetchLinkToken(); }, [fetchLinkToken]);
+
+  const onSuccess = useCallback(async (public_token) => {
     try {
-      const { data } = await api.post('/plaid/create-link-token');
-      setLinkToken(data.link_token);
+      await api.post('/exchange_public_token', { public_token });
+      window.location.href = '/dashboard';
     } catch (err) {
-      console.error('Failed to get link token', err);
-    } finally {
-      setLoading(false);
+      console.error('Token exchange failed:', err);
     }
-  };
+  }, []);
 
-  const onSuccess = useCallback(async (publicToken) => {
-    await api.post('/plaid/exchange-token', { public_token: publicToken });
-    navigate('/dashboard');
-  }, [navigate]);
+  const { open, ready } = usePlaidLink({ token: linkToken ?? '', onSuccess });
 
-  const { open, ready } = usePlaidLink({ token: linkToken, onSuccess });
+  const isReady = ready && !!linkToken;
 
-  const handleClick = async () => {
-    if (!linkToken) {
-      await fetchLinkToken();
+  // Must be before any conditional return to satisfy Rules of Hooks
+  useEffect(() => {
+    if (ready && linkToken && onReady) {
+      onReady(open);
     }
-  };
+  }, [ready, linkToken, open, onReady]);
 
-  // Open Plaid Link once token is ready
-  if (linkToken && ready) {
-    open();
+  if (fetchError) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ fontSize: 13, color: 'var(--danger)', background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: 8, padding: '10px 16px', maxWidth: 360 }}>
+          {fetchError}
+        </div>
+        <button
+          onClick={fetchLinkToken}
+          style={{ background: 'var(--teal-500)', color: '#fff', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 15, padding: '12px 24px', borderRadius: 12, border: 'none', cursor: 'pointer' }}
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
+  // if onReady is passed, render nothing (parent controls button)
+  // otherwise render the button as before
+  if (onReady) return null;
   return (
     <button
-      onClick={handleClick}
-      disabled={loading}
-      className="bg-brand-primary hover:bg-brand-accent text-white font-semibold px-8 py-3 rounded-xl transition-colors disabled:opacity-50"
+      onClick={() => open()}
+      disabled={!isReady}
+      style={{
+        background: 'var(--teal-500)',
+        color: '#fff',
+        fontFamily: 'var(--font-sans)',
+        fontWeight: 600,
+        fontSize: 16,
+        padding: '14px 28px',
+        borderRadius: 12,
+        border: 'none',
+        cursor: isReady ? 'pointer' : 'not-allowed',
+        opacity: isReady ? 1 : 0.6,
+        transition: 'opacity 150ms',
+      }}
     >
-      {loading ? 'Connecting…' : 'Connect My Bank Account'}
+      {!linkToken ? 'Loading…' : !ready ? 'Initializing…' : 'Connect My Bank Account'}
     </button>
   );
 }
