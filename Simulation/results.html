@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Results</title>
-    <link rel="stylesheet" href="styles.css"> 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <script src="simulation.js"></script>
 </head>
 <body>
@@ -12,8 +15,9 @@
   <!-- INCOME & SAVINGS SUMMARY -->
   <section id="summary-section">
      <h1>Your Financial Results</h1>
-<br>
+
     <h2>Income & Savings</h2>
+    <div class="form-group">
     <table>
       <tr>
         <td>Monthly Income</td>
@@ -28,11 +32,13 @@
         <td><span id="savingsRate"></span></td>
       </tr>
     </table>
+    </div>
   </section>
 
   <!-- EXPENSE BREAKDOWN -->
   <section id="expenses-section">
     <h2>Monthly Expenses</h2>
+    <div class="form-group">
     <table>
       <tr><td>Housing</td><td><span id="housingResult"></span></td></tr>
       <tr><td>Loan Payments</td><td><span id="loansResult"></span></td></tr>
@@ -43,17 +49,19 @@
       <tr><td>Entertainment</td><td><span id="entertainmentResult"></span></td></tr>
       <tr><td>Clothing</td><td><span id="clothingResult"></span></td></tr>
       <tr><td>Other Expenses</td><td><span id="otherExpensesResult"></span></td></tr>
-      <tr>
-        <td><strong>Total Expenses</strong></td>
-        <td><strong><span id="totalExpensesResult"></span></strong></td>
+      <tr style="background: rgba(74, 85, 104, 0.1); font-weight: bold;">
+        <td>Total Expenses</td>
+        <td><span id="totalExpensesResult"></span></td>
       </tr>
     </table>
+    </div>
   </section>
 
   <!-- CSV COMPARISON -->
   <section id="comparison-section">
     <h2>How You Compare</h2>
     <p>Based on the data you uploaded, here's how your budget stacks up.</p>
+    <div class="form-group">
     <table>
       <thead>
         <tr>
@@ -67,31 +75,40 @@
         <!-- populated by JS -->
       </tbody>
     </table>
+    </div>
   </section>
 
   <!-- BUDGET BREAKDOWN CHART -->
   <section id="chart-section">
     <h2>Budget Breakdown</h2>
-    <table id = "budgetTable">
-      <th></th>
-      <th><strong>A Typical Budget</strong></th>
-      <th><strong>Your Spending</strong></th>
-      <tr>
-        <td>Needs: housing, utilities, groceries, insurance (50%)</td> 
-        <td id = "typicalNeeds"></td>
-        <td id = "yourNeeds"></td>
-      </tr>
-      <tr>
-        <td>Wants: dining out, entertainment, hobbies (30%)</td>
-        <td id = "typicalWants"></td>
-        <td id = "yourWants"></td>
-      </tr>
-      <tr>
-        <td>Savings and debt repayment (20%)</td>
-        <td id = "typicalSavings"></td>
-        <td id = "yourSavings"></td>
-      </tr>
+    <div class="form-group">
+    <table id="budgetTable">
+      <thead>
+        <tr>
+          <th></th>
+          <th>A Typical Budget</th>
+          <th>Your Spending</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Needs: housing, utilities, groceries, insurance (50%)</td>
+          <td id="typicalNeeds"></td>
+          <td id="yourNeeds"></td>
+        </tr>
+        <tr>
+          <td>Wants: dining out, entertainment, hobbies (30%)</td>
+          <td id="typicalWants"></td>
+          <td id="yourWants"></td>
+        </tr>
+        <tr>
+          <td>Savings and debt repayment (20%)</td>
+          <td id="typicalSavings"></td>
+          <td id="yourSavings"></td>
+        </tr>
+      </tbody>
     </table>
+    </div>
   </section>
 
   <!-- PERSONALIZED TIPS -->

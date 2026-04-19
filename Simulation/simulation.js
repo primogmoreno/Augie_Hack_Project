@@ -22,39 +22,52 @@ function submit() {
 }
 
 function displayResults() {
+    console.log("displayResults called");
     const storedAnswers = localStorage.getItem("answers");
+    console.log("Stored answers:", storedAnswers);
+
     if(!storedAnswers) {
+        console.log("No stored answers found");
         document.getElementById("results").innerText = "No data found. Please submit the form first.";
         return;
     }
     let answers;
     try{
         answers = JSON.parse(storedAnswers);
+        console.log("Parsed answers:", answers);
     } catch(e) {
+        console.log("Error parsing answers:", e);
         document.getElementById("results").innerText = "Error parsing stored data.";
         return;
     }
 
     const savingsRate = ((answers.monthlySavings / answers.monthlyIncome) * 100).toFixed(1) || 0;
+    console.log("Savings rate:", savingsRate);
 
     //display results
-    const fmt = n =>  isNaN(n) ? '-': '$' + Number(n).toLocaleString();
     for(const key in answers) {
         const element = document.getElementById(key + "Result");
-        if(!element) continue;
+        if(!element) {
+            console.log("Element not found:", key + "Result");
+            continue;
+        }
         element.innerText = fmt(answers[key]);
+        console.log("Set", key + "Result", "to", fmt(answers[key]));
     }
     const rateElement = document.getElementById("savingsRate");
     if(rateElement) {
         rateElement.innerText = isNaN(savingsRate) ? '-' : savingsRate + '%';
+        console.log("Set savings rate to:", savingsRate + '%');
     }
 
     // Calculate and display total expenses
     const expenseKeys = ['housing', 'loans', 'insurance', 'transportation', 'utilities', 'food', 'entertainment', 'clothing', 'otherExpenses'];
     const totalExpenses = expenseKeys.reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    console.log("Total expenses:", totalExpenses);
     const totalElement = document.getElementById("totalExpensesResult");
     if(totalElement) {
         totalElement.innerText = fmt(totalExpenses);
+        console.log("Set total expenses to:", fmt(totalExpenses));
     }
 }
 
@@ -121,13 +134,28 @@ function populateComparison() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    if (document.getElementById("monthlyIncome")) {
+    console.log("DOM loaded, checking page type...");
+
+    // Check which page we're on
+    const isWelcomePage = document.getElementById("monthlyIncome") !== null;
+    const isResultsPage = document.getElementById("monthlyIncomeResult") !== null;
+
+    console.log("Is welcome page:", isWelcomePage);
+    console.log("Is results page:", isResultsPage);
+
+    if (isWelcomePage) {
+        console.log("Running welcome page functions");
         calcTotal();
+        initScrollIndicators();
     }
-    displayResults();
-    populateComparison();
-    populateBudget();
-    suggestions();
+
+    if (isResultsPage) {
+        console.log("Running results page functions");
+        displayResults();
+        populateComparison();
+        populateBudget();
+        suggestions();
+    }
 });
 
 function calcTotal() {
@@ -140,36 +168,53 @@ function calcTotal() {
 }
 
 function populateBudget(){
+    console.log("populateBudget called");
     const storedAnswers = localStorage.getItem("answers");
-    if(!storedAnswers) return;
+    if(!storedAnswers) {
+        console.log("No stored answers for budget");
+        return;
+    }
     let answers;
     try{
         answers = JSON.parse(storedAnswers);
+        console.log("Budget answers:", answers);
     } catch(e) {
+        console.log("Error parsing budget answers:", e);
         return;
     }
 
     const income = Number(answers.monthlyIncome) || 0;
+    console.log("Income for budget:", income);
 
     //populate needs (50%)
     const needs = income * 0.5;
+    console.log("Setting typical needs to:", fmt(needs));
     document.getElementById("typicalNeeds").innerText = fmt(needs);
 
     const yourNeeds = ['housing', 'insurance', 'transportation', 'utilities', 'food'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    console.log("Setting your needs to:", fmt(yourNeeds));
     document.getElementById("yourNeeds").innerText = fmt(yourNeeds);
+
     //populate wants (30%)
     const wants = income * 0.3;
+    console.log("Setting typical wants to:", fmt(wants));
     document.getElementById("typicalWants").innerText = fmt(wants);
+
     const yourWants = ['entertainment', 'clothing', 'otherExpenses'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    console.log("Setting your wants to:", fmt(yourWants));
     document.getElementById("yourWants").innerText = fmt(yourWants);
+
     //populate savings (20%)
     const savings = income * 0.2;
+    console.log("Setting typical savings to:", fmt(savings));
     document.getElementById("typicalSavings").innerText = fmt(savings);
+
     const yourSavings = ['monthlySavings', 'loans'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+    console.log("Setting your savings to:", fmt(yourSavings));
     document.getElementById("yourSavings").innerText = fmt(yourSavings);
 }
 
-function suggestions(){
+async function suggestions(){
     const storedAnswers = localStorage.getItem("answers");
     if(!storedAnswers) return;
     let answers;
@@ -186,39 +231,97 @@ function suggestions(){
     const userNeeds = ['housing', 'insurance', 'transportation', 'utilities', 'food'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
     const userWants = ['entertainment', 'clothing', 'otherExpenses'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
     const userSavings = ['monthlySavings', 'loans'].reduce((sum, key) => sum + (Number(answers[key]) || 0), 0);
+
     await getAIGeneratedTips(answers, typicalBudgetData, userNeeds, userWants, userSavings);
 }
-async function getAIGeneratedTips(answers,typicalData, userNeeds, userWants, userSavings){
-
-   const tipsList = document.getElementById("tips-list"); // Ensure this ID matches your HTML
+async function getAIGeneratedTips(answers, typicalData, userNeeds, userWants, userSavings){
+    const tipsList = document.getElementById("tips-list");
     if (!tipsList) return;
 
-    tipsList.innerHTML = "<li>Loading suggestions...</li>";
+    // For now, show some sample tips based on the data
+    const tips = [];
 
-    // This is the prompt logic you'll send to your API/Gemini
-    const promptText = `Acting as a professional financial advisor... (your prompt logic here)`;
-
-    try {
-        const response = await fetch("/api/generate-tips", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                prompt: promptText, // Usually, you want to send the prompt string
-                userData: answers 
-            })
-        });
-
-        const data = await response.json();
-        if (data.advice) {
-        const lines = data.advice.split("\n").filter(line => line.trim() !== "");
-        tipsList.innerHTML = lines.map(line => `<li>${line.replace(/^[*-]\s*/, '')}</li>`).join("");
+    if (userNeeds > typicalData.needs) {
+        tips.push("Your housing and essential expenses are higher than the 50% guideline. Consider ways to reduce these costs.");
     } else {
-        tipsList.innerHTML = "<li>No specific advice at this time.</li>";
+        tips.push("Great job keeping your essential expenses under 50% of your income!");
     }
-        
-       
-    } catch (error) {
-        console.error("Error generating AI tips:", error);
-        tipsList.innerHTML = "<li>Error generating suggestions.</li>";
+
+    if (userWants > typicalData.wants) {
+        tips.push("Your discretionary spending exceeds the 30% guideline. Review your entertainment and lifestyle expenses.");
+    } else {
+        tips.push("Your discretionary spending is within the recommended 30% range.");
     }
+
+    if (userSavings < typicalData.savings) {
+        tips.push("Consider increasing your savings to reach the recommended 20% of income.");
+    } else {
+        tips.push("Excellent! You're saving more than the recommended 20% of your income.");
+    }
+
+    // Clear loading message and add tips
+    tipsList.innerHTML = "";
+    tips.forEach(tip => {
+        const li = document.createElement("li");
+        li.textContent = tip;
+        tipsList.appendChild(li);
+    });
+
+    // TODO: Replace with actual API call to Gemini
+    // const response = await fetch('/api/gemini/tips', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ answers, typicalData, userNeeds, userWants, userSavings })
+    // });
+    // const data = await response.json();
+    // // Process and display the AI-generated tips
+}
+
+// Scroll indicator functionality
+function initScrollIndicators() {
+    const indicators = document.querySelectorAll('.scroll-dot');
+    const sections = document.querySelectorAll('section');
+
+    // Set first indicator as active by default
+    if (indicators.length > 0) {
+        indicators[0].classList.add('active');
+    }
+
+    // Update active indicator on scroll
+    function updateActiveIndicator() {
+        const scrollY = window.scrollY;
+        const windowHeight = window.innerHeight;
+
+        sections.forEach((section, index) => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            const sectionCenter = sectionTop + sectionHeight / 2;
+
+            // Update active indicator (when section is in center of viewport)
+            if (Math.abs(scrollY + windowHeight / 2 - sectionCenter) < windowHeight / 2) {
+                // Remove active class from all indicators
+                indicators.forEach(indicator => indicator.classList.remove('active'));
+                // Add active class to current indicator
+                if (indicators[index]) {
+                    indicators[index].classList.add('active');
+                }
+            }
+        });
+    }
+
+    // Add click handlers to indicators
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+            const targetSection = sections[index];
+            if (targetSection) {
+                targetSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Listen for scroll events
+    window.addEventListener('scroll', updateActiveIndicator);
 }
