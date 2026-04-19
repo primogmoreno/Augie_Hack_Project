@@ -770,8 +770,8 @@ def dictionary_context():
 
         direct_deposits = [t for t in credits if any(w in t.get('name', '').upper() for w in ('PAYROLL', 'DIRECT DEP', 'ADP', 'GUSTO', 'SALARY'))]
         detected_dd = len(direct_deposits) > 0
-        dd_amount   = round(abs(direct_deposits[0]['amount'])) if direct_deposits else 0
-        dd_source   = direct_deposits[0].get('name', 'EMPLOYER') if direct_deposits else ''
+        dd_amount   = round(abs(direct_deposits.get('amount', 0))) if direct_deposits else 0
+        dd_source   = direct_deposits.get('name', 'EMPLOYER') if direct_deposits and isinstance(direct_deposits, dict) else ''
 
         overdraft_txs   = [t for t in debits if 'OVERDRAFT' in t.get('name', '').upper() or 'NSF' in t.get('name', '').upper()]
         overdraft_fees  = round(sum(t['amount'] for t in overdraft_txs))

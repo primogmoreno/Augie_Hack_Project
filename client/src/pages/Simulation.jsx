@@ -110,6 +110,7 @@ export default function Simulation() {
   });
   const [tips, setTips] = useState([]);
   const [tipsLoading, setTipsLoading] = useState(false);
+  const [plaidLoading, setPlaidLoading] = useState(false);
 
   const set = (key) => (val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -125,6 +126,42 @@ export default function Simulation() {
   const yourNeeds   = NEEDS_KEYS.reduce((s, k) => s + (Number(form[k]) || 0), 0);
   const yourWants   = WANTS_KEYS.reduce((s, k) => s + (Number(form[k]) || 0), 0);
   const yourSavings = SAVINGS_KEYS.reduce((s, k) => s + (Number(form[k]) || 0), 0);
+
+  const handleAutoFill = async () => {
+    setPlaidLoading(true);
+    try {
+      const { data } = await api.get('/summary?days=90');
+      if (data && !data.error && !data.pending) {
+        const monthly = (val) => Math.round((val || 0) / 3);
+        let food = 0, transport = 0, utilities = 0, entertainment = 0, clothing = 0, other = 0;
+        
+        (data.category_totals || []).forEach(c => {
+          if (c.category === 'Food & Dining') food = c.total;
+          else if (c.category === 'Transport') transport = c.total;
+          else if (c.category === 'Utilities') utilities = c.total;
+          else if (c.category === 'Entertainment') entertainment = c.total;
+          else if (c.category === 'Shopping') clothing = c.total;
+          else other += c.total; // Catch 'Healthcare', 'Other', etc.
+        });
+
+        setForm(f => ({
+          ...f,
+          monthlyIncome: monthly(data.total_income) || f.monthlyIncome,
+          monthlySavings: monthly(data.savings_invested) || f.monthlySavings,
+          food: monthly(food) || '',
+          transportation: monthly(transport) || '',
+          utilities: monthly(utilities) || '',
+          entertainment: monthly(entertainment) || '',
+          clothing: monthly(clothing) || '',
+          otherExpenses: monthly(other) || '',
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to auto-fill from Plaid', err);
+    } finally {
+      setPlaidLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     setStep('results');
@@ -165,6 +202,12 @@ export default function Simulation() {
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)' }}>
           <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="secondary" onClick={handleAutoFill} disabled={plaidLoading} style={{ fontSize: 13, padding: '8px 16px', background: 'var(--surface-card)' }}>
+                {plaidLoading ? 'Syncing Data...' : '✦ Auto-fill from connected bank'}
+              </Button>
+            </div>
 
             {/* Income & Savings */}
             <Card style={{ padding: 28 }}>

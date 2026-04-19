@@ -10,6 +10,7 @@ import Explainer from '../components/dashboard/Explainer';
 import PlaidLink from '../components/plaid/PlaidLinkButton';
 import api from '../services/api';
 import { cacheGet, cacheSet } from '../services/cache';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis } from 'recharts';
 
 const FALLBACK_TXS = [
   { icon: 'dining',       name: 'Blue Bottle Coffee', sub: 'Today · 8:14 AM',  tag: 'Food & Dining', amt: -6.25             },
@@ -156,9 +157,26 @@ export default function Dashboard() {
     }
   }, []);
 
+  const connected  = isConnected === true;
+  const loading    = isConnected === null;
+
   const topCategories = (summary?.category_totals ?? [])
     .filter(c => c.category !== 'Income' && c.category !== 'Savings & Investing')
     .slice(0, 4);
+
+  const pieData = connected && topCategories.length > 0
+    ? topCategories.map(cat => ({
+        name: cat.category,
+        value: cat.total,
+        color: cat.color?.primary ?? 'var(--primary)'
+      }))
+    : PLACEHOLDER_BUDGET.map(b => ({
+        name: b.name,
+        value: b.pct,
+        color: b.color
+      }));
+
+  const weeklyData = summary?.weekly_spending ?? [];
 
   const user = JSON.parse(sessionStorage.getItem('user'));
   const greeting = (() => {
@@ -168,8 +186,6 @@ export default function Dashboard() {
     return `Good evening, ${user?.displayName ?? 'there'}!`;
   })();
 
-  const connected  = isConnected === true;
-  const loading    = isConnected === null;
   const totalValue = connected ? accounts.reduce((sum, a) => sum + a.bal, 0) : 0;
   const riskLabel  = getRiskLabel(summary);
 
@@ -264,6 +280,38 @@ export default function Dashboard() {
           </section>
         )}
 
+      {/* ── SPENDING TREND CHART ──────────────────────────────── */}
+      {connected && weeklyData.length > 0 && (
+        <section style={{ marginBottom: 28 }}>
+          <Card style={{ padding: '24px 28px' }}>
+            <div style={{ marginBottom: 20 }}>
+              <h4 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 20, color: 'var(--primary)', margin: '0 0 4px' }}>
+                Weekly Spending Trend
+              </h4>
+            </div>
+            <div style={{ height: 200 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weeklyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--fg-3)' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--fg-3)' }} tickFormatter={(val) => `$${val}`} />
+                  <Tooltip 
+                    formatter={(value) => [`$${value}`, 'Spent']}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)', fontSize: 13 }}
+                  />
+                  <Area type="monotone" dataKey="total" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </section>
+      )}
+
         {/* ── BENTO GRID: Spending | Activity | AI Insight ─────────── */}
         <section style={{ display: 'grid', gridTemplateColumns: '4fr 5fr 3fr', gap: 16, marginBottom: 28 }}>
 
@@ -276,20 +324,39 @@ export default function Dashboard() {
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--fg-3)', margin: 0 }}>Last 30 Days Analysis</p>
               </div>
-              {(connected && topCategories.length > 0 ? topCategories.map(cat => ({
-                name: cat.category,
-                pct:  Math.round((cat.total / (topCategories[0]?.total ?? 1)) * 100),
-                color: cat.color?.primary ?? 'var(--primary)',
-                label: `$${cat.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-              })) : PLACEHOLDER_BUDGET).map(b => (
-                <div key={b.name} style={{ marginBottom: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-                    <span style={{ fontWeight: 500 }}>{b.name}</span>
-                    <span className="money" style={{ color: 'var(--fg-2)' }}>{b.label ?? '—'}</span>
+          
+            <div style={{ height: 180, marginBottom: 16 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    innerRadius={55}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => `$${Number(value).toFixed(2)}`}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: 'var(--shadow-md)', fontSize: 13 }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {pieData.map(b => (
+              <div key={b.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: b.color }} />
+                  <span style={{ fontWeight: 500, color: 'var(--fg-1)' }}>{b.name}</span>
                   </div>
-                  <div style={{ height: 4, background: 'var(--border-1)', borderRadius: 'var(--radius-xs)' }}>
-                    <div style={{ width: `${b.pct}%`, height: '100%', borderRadius: 999, background: b.color }} />
-                  </div>
+                <span className="money" style={{ color: 'var(--fg-2)' }}>
+                  ${b.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
                 </div>
               ))}
             </div>

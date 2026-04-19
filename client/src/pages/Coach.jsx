@@ -71,9 +71,11 @@ export default function Coach() {
         messages: [...history, { role: 'user', content: text }],
         accountSummary,
       });
+      if (data.error) throw new Error(data.error);
       setMessages(m => [...m, { role: 'ai', text: data.reply, suggestions: [] }]);
     } catch {
-      const fallback = CANNED[text] ?? { text: "Let me look at that. (Try one of the suggested prompts for a full reply.)", suggestions: [] };
+      // If API fails, check if it's a demo prompt, otherwise show a graceful error
+      const fallback = CANNED[text] ?? { text: "I'm having a little trouble connecting to my AI network right now. Please try again in a moment!", suggestions: Object.keys(CANNED) };
       setTimeout(() => setMessages(m => [...m, { role: 'ai', ...fallback }]), 600);
     } finally {
       setLoading(false);
