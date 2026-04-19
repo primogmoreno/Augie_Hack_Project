@@ -15,6 +15,7 @@ export default function FilterBar({
   searchTerm, setSearchTerm,
   sortKey, setSortKey,
   dateRange, setDateRange,
+  recurringOnly, setRecurringOnly,
   onApply,
 }) {
   const debounceRef = useRef(null);
@@ -89,6 +90,26 @@ export default function FilterBar({
         </select>
         <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-3)" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
+
+      {/* Recurring toggle */}
+      <button
+        onClick={() => setRecurringOnly(v => !v)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: recurringOnly ? 'var(--primary-muted)' : 'var(--surface-card)',
+          color: recurringOnly ? 'var(--primary)' : 'var(--fg-2)',
+          border: recurringOnly ? '1.5px solid var(--primary)' : '1.5px solid transparent',
+          borderRadius: 'var(--radius-md)',
+          padding: '9px 14px', fontSize: 13, fontWeight: recurringOnly ? 700 : 500,
+          fontFamily: 'var(--font-sans)', cursor: 'pointer', whiteSpace: 'nowrap',
+          transition: 'all var(--dur-fast) var(--ease-out)',
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
+        </svg>
+        Recurring
+      </button>
 
       {/* Apply button */}
       <button

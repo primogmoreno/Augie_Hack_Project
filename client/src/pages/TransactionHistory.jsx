@@ -25,9 +25,10 @@ export default function TransactionHistory() {
   const [currentPage, setCurrentPage]   = useState(1);
   const navigate = useNavigate();
 
-  const [activeCat, setActiveCat]   = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortKey, setSortKey]       = useState('date-desc');
+  const [activeCat, setActiveCat]       = useState('all');
+  const [searchTerm, setSearchTerm]     = useState('');
+  const [sortKey, setSortKey]           = useState('date-desc');
+  const [recurringOnly, setRecurringOnly] = useState(false);
 
   const fetchData = async (days) => {
     setLoading(true);
@@ -71,7 +72,7 @@ export default function TransactionHistory() {
   }, [dateRange]);
 
   // Reset page when filters change
-  useEffect(() => { setCurrentPage(1); }, [activeCat, searchTerm, sortKey, dateRange]);
+  useEffect(() => { setCurrentPage(1); }, [activeCat, searchTerm, sortKey, dateRange, recurringOnly]);
 
   const categories = useMemo(() =>
     [...new Set(transactions.map(t => t.category))].sort(),
@@ -80,6 +81,7 @@ export default function TransactionHistory() {
   const filteredTransactions = useMemo(() => {
     let result = [...transactions];
     if (activeCat !== 'all')   result = result.filter(t => t.category === activeCat);
+    if (recurringOnly)         result = result.filter(t => t.is_recurring);
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       result = result.filter(t =>
@@ -98,7 +100,7 @@ export default function TransactionHistory() {
       }
     });
     return result;
-  }, [transactions, activeCat, searchTerm, sortKey]);
+  }, [transactions, activeCat, searchTerm, sortKey, recurringOnly]);
 
   const totalPages    = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE));
   const startIdx      = (currentPage - 1) * PAGE_SIZE;
@@ -108,6 +110,7 @@ export default function TransactionHistory() {
     setActiveCat('all');
     setSearchTerm('');
     setSortKey('date-desc');
+    setRecurringOnly(false);
     setCurrentPage(1);
   };
 
@@ -232,10 +235,11 @@ export default function TransactionHistory() {
             {/* Unified filter bar */}
             <FilterBar
               categories={categories}
-              activeCat={activeCat}     setActiveCat={setActiveCat}
-              searchTerm={searchTerm}   setSearchTerm={setSearchTerm}
-              sortKey={sortKey}         setSortKey={setSortKey}
-              dateRange={dateRange}     setDateRange={setDateRange}
+              activeCat={activeCat}         setActiveCat={setActiveCat}
+              searchTerm={searchTerm}       setSearchTerm={setSearchTerm}
+              sortKey={sortKey}             setSortKey={setSortKey}
+              dateRange={dateRange}         setDateRange={setDateRange}
+              recurringOnly={recurringOnly} setRecurringOnly={setRecurringOnly}
               onApply={() => setCurrentPage(1)}
             />
 
