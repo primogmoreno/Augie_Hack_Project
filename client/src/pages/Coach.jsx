@@ -3,7 +3,7 @@ import TopBar from '../components/layout/TopBar';
 import Button from '../components/ui/Button';
 import Icon, { ICONS } from '../components/ui/Icon';
 import api from '../services/api';
-
+/* 
 async function fetchAccountSummary() {
   try {
     const { data } = await api.get('/accounts');
@@ -25,7 +25,7 @@ async function fetchAccountSummary() {
     return null;
   }
 }
-
+ */
 const INITIAL_MESSAGE = {
   role: 'ai',
   text: "Hi — I'm your FinLit coach, powered by Gemini. I can explain anything on your statement, walk you through tough money decisions, or help you prep for a call with your credit union.",
@@ -54,10 +54,18 @@ export default function Coach() {
   const [accountSummary, setAccountSummary] = useState(null);
   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    fetchAccountSummary().then(setAccountSummary);
-  }, []);
+useEffect(() => {
+  const fetchSummary = async () => {
+    try {
+      const res = await api.get('/summary?days=30');
+      setAccountSummary(res.data);
+    } catch (error) {
+      console.error('Failed to fetch summary:', error);
+    }
+  };
 
+  fetchSummary();
+}, []);
   const send = async (text) => {
     if (!text.trim() || loading) return;
     setMessages(m => [...m, { role: 'user', text }]);
@@ -69,7 +77,7 @@ export default function Coach() {
       const history = messages.map(m => ({ role: m.role === 'ai' ? 'model' : 'user', content: m.text }));
       const { data } = await api.post('/gemini/chat', {
         messages: [...history, { role: 'user', content: text }],
-        accountSummary,
+        accountSummary: accountSummary,
       });
       if (data.error) throw new Error(data.error);
       setMessages(m => [...m, { role: 'ai', text: data.reply, suggestions: [] }]);

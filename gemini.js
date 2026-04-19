@@ -1,11 +1,86 @@
-const express = require('express');
-const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// Client-side functions for prediction simulation
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+// This stays in memory for the duration of the session
+let cachedNCUAData = null;
 
-router.post('/analyze-spending', async (req, res) => {
+/**
+ * Call this ONCE when the app starts
+ */
+export async function initNCUAData() {
+    if (cachedNCUAData) return cachedNCUAData;
+
+    const targetUrl = "https://ncua.gov/analysis/cuso-economic-data/credit-union-bank-rates";
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+    try {
+        const response = await fetch(proxyUrl);
+        const json = await response.json();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(json.contents, 'text/html');
+        const rows = Array.from(doc.querySelectorAll('table tr'));
+
+        cachedNCUAData = rows.map(row => {
+            const cells = row.querySelectorAll('td');
+            return {
+                product: cells[0]?.innerText.trim(),
+                cu_rate: parseFloat(cells[1]?.innerText),
+                bank_rate: parseFloat(cells[2]?.innerText)
+            };
+        }).filter(item => item.product && !isNaN(item.cu_rate));
+
+        console.log("NCUA Data cached successfully.");
+        return cachedNCUAData;
+    } catch (err) {
+        console.error("Failed to fetch NCUA data:", err);
+        return null;
+    }
+}
+
+export async function predictFuture(advanceTime) {
+    // 1. Construct the prompt with passed-in variables
+    const prompt = `Context: I am providing historical data from the NCUA. ` +
+    `Data: ${JSON.stringify(cachedNCUAData)}. ` +
+    `Task: Analyze auto and mortgage loan trends. Predict changes over ${advanceTime} years. ` +
+    `Return JSON: { "inflationRate": float, "marketRate": float, "recessionProbability": float }`;
+    
+    const apiKey = window.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    try {
+        const response = await fetch(URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.1,
+                    responseMimeType: 'application/json'
+                }
+            })
+        });
+
+        const json = await response.json();
+        const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!rawText) throw new Error("No response from AI");
+
+        return JSON.parse(rawText); // Just return the object
+    } catch (error) {
+        console.error("Prediction fetch failed:", error);
+        return null;
+    }
+}
+
+// Server-side code below (commented out for client use)
+// const express = require('express');
+// const router = express.Router();
+// const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+// router.post('/analyze-spending', async (req, res) => {
   const transactions = req.body.transactions || [];
   const prompt = `
 You are a friendly, non-judgmental financial literacy coach.
@@ -29,7 +104,7 @@ Be encouraging and supportive throughout.
     console.error('analyze-spending error', err.message);
     res.status(500).json({ error: 'Gemini request failed' });
   }
-});
+
 
 router.post('/decode-jargon', async (req, res) => {
   const { term, accountContext } = req.body;
@@ -81,5 +156,71 @@ Rules:
     res.status(500).json({ error: 'Gemini request failed' });
   }
 });
+// This stays in memory for the duration of the session
+let cachedNCUAData = null;
+
+/**
+ * Call this ONCE when the app starts
+ */
+async function initNCUAData() {
+    if (cachedNCUAData) return cachedNCUAData;
+
+    const targetUrl = "https://ncua.gov/analysis/cuso-economic-data/credit-union-bank-rates";
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+    try {
+        const response = await fetch(proxyUrl);
+        const json = await response.json();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(json.contents, 'text/html');
+        const rows = Array.from(doc.querySelectorAll('table tr'));
+
+        cachedNCUAData = rows.map(row => {
+            const cells = row.querySelectorAll('td');
+            return {
+                product: cells[0]?.innerText.trim(),
+                cu_rate: parseFloat(cells[1]?.innerText),
+                bank_rate: parseFloat(cells[2]?.innerText)
+            };
+        }).filter(item => item.product && !isNaN(item.cu_rate));
+
+        console.log("NCUA Data cached successfully.");
+        return cachedNCUAData;
+    } catch (err) {
+        console.error("Failed to fetch NCUA data:", err);
+        return null;
+    }
+}
+
+async function predictFuture(advanceTime) {
+    if (!cachedNCUAData) {
+        await initNCUAData();
+    }
+
+    const prompt = `Context: I am providing historical data from the NCUA. ` +
+        `Data: ${JSON.stringify(cachedNCUAData)}. ` +
+        `Task: Analyze auto and mortgage loan trends. Predict changes over ${advanceTime} years. ` +
+        `Return JSON: { "inflationRate": float, "marketRate": float, "recessionProbability": float }`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const rawText = result.response?.text?.();
+
+        if (!rawText) throw new Error("No response from Gemini");
+
+        try {
+            return JSON.parse(rawText);
+        } catch (parseError) {
+            console.error("Prediction parse failed:", parseError, rawText);
+            return null;
+        }
+    } catch (error) {
+        console.error("Prediction fetch failed:", error);
+        return null;
+    }
+}
 
 module.exports = router;
+module.exports.initNCUAData = initNCUAData;
+module.exports.predictFuture = predictFuture;

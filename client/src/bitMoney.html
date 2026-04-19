@@ -6,7 +6,7 @@
     <title>Financial Future Simulator</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
     <link rel="stylesheet" href = "bitMoney.css">
-    <script src="PredictionSim.js"></script>
+    <script src="./PredictionSim.js"></script>
 </head>
 <body>
     <currentStatus>
@@ -41,10 +41,12 @@
         </form>
         <button id="continueButton">Apply Changes</button>
     </progression>
-    <div id="randomEvent" style = "display:none; position: fixed; inset:0; align-items:center; justify-content:center;">
-        <h3>Life Event: <span id="eventTitle"></span></h3>
-        <p id="eventDescription"></p>
-        <button id="closeEventButton">Close</button>
+    <div id="randomEvent" style="display:none;">
+        <div>
+            <h3>Life Event: <span id="eventTitle"></span></h3>
+            <p id="eventDescription"></p>
+            <button id="closeEventButton">Close</button>
+        </div>
     </div>
     <button id="restartButton" onclick="window.location.href = 'PredictionSim.html';">Restart Simulation</button>
 </body>
