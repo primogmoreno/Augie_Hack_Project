@@ -1,25 +1,21 @@
-import { useEffect, useRef } from 'react';
-
-const TYPE_PILLS = [
-  { id: 'all',       label: 'All' },
-  { id: 'debit',     label: 'Expenses' },
-  { id: 'credit',    label: 'Income' },
-  { id: 'recurring', label: 'Recurring' },
-];
+import { useRef } from 'react';
 
 const SORT_OPTIONS = [
-  { value: 'date-desc',    label: 'Date (newest first)' },
-  { value: 'date-asc',     label: 'Date (oldest first)' },
-  { value: 'amount-desc',  label: 'Amount (high to low)' },
-  { value: 'amount-asc',   label: 'Amount (low to high)' },
-  { value: 'cat',          label: 'Category A–Z' },
+  { value: 'date-desc',   label: 'Date (newest first)' },
+  { value: 'date-asc',    label: 'Date (oldest first)' },
+  { value: 'amount-desc', label: 'Amount (high to low)' },
+  { value: 'amount-asc',  label: 'Amount (low to high)' },
+  { value: 'cat',         label: 'Category A–Z' },
 ];
+
+const SEARCH_ICON = 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z';
 
 export default function FilterBar({
   categories, activeCat, setActiveCat,
-  activeType, setActiveType,
   searchTerm, setSearchTerm,
   sortKey, setSortKey,
+  dateRange, setDateRange,
+  onApply,
 }) {
   const debounceRef = useRef(null);
 
@@ -28,83 +24,89 @@ export default function FilterBar({
     debounceRef.current = setTimeout(() => setSearchTerm(val), 150);
   };
 
-  useEffect(() => () => clearTimeout(debounceRef.current), []);
-
-  const pillStyle = (active) => ({
-    padding: '5px 12px',
-    borderRadius: 'var(--radius-sm)',
-    border: active ? 'none' : '1px solid var(--border-1)',
-    background: active ? '#173124' : 'var(--surface-low)',
-    color: active ? '#faf9f5' : 'var(--fg-2)',
+  const selectStyle = {
+    background: 'var(--surface-card)',
+    border: 'none',
+    borderRadius: 'var(--radius-md)',
+    padding: '10px 14px',
     fontSize: 13,
-    fontWeight: 500,
     fontFamily: 'var(--font-sans)',
+    color: 'var(--fg-1)',
+    outline: 'none',
     cursor: 'pointer',
-    transition: 'all var(--dur-fast) var(--ease-out)',
-    whiteSpace: 'nowrap',
-  });
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    paddingRight: 28,
+  };
 
   return (
     <div style={{
-      background: 'var(--surface-card)',
-      border: 'none',
+      background: 'var(--surface-low)',
       borderRadius: 'var(--radius-xl)',
-      boxShadow: 'var(--shadow-sm)',
-      padding: '14px 18px',
-      marginBottom: 16,
+      padding: 8,
+      marginBottom: 20,
       display: 'flex',
-      flexDirection: 'column',
-      gap: 12,
+      gap: 8,
+      alignItems: 'center',
+      flexWrap: 'wrap',
     }}>
-      {/* Row 1: category pills */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)', marginRight: 4 }}>Category</span>
-        <button style={pillStyle(activeCat === 'all')} onClick={() => setActiveCat('all')}>All</button>
-        {categories.map(cat => (
-          <button key={cat} style={pillStyle(activeCat === cat)} onClick={() => setActiveCat(cat)}>{cat}</button>
-        ))}
+      {/* Search input */}
+      <div style={{ flex: 1, minWidth: 180, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface-card)', borderRadius: 'var(--radius-md)', padding: '10px 14px' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--fg-3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d={SEARCH_ICON} />
+        </svg>
+        <input
+          defaultValue={searchTerm}
+          onChange={e => handleSearch(e.target.value)}
+          placeholder="Search transactions, merchants…"
+          style={{ border: 'none', outline: 'none', fontSize: 13, fontFamily: 'var(--font-sans)', background: 'transparent', width: '100%', color: 'var(--fg-1)' }}
+        />
       </div>
 
-      {/* Row 2: type pills + search + sort */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)', marginRight: 4 }}>Type</span>
-        {TYPE_PILLS.map(p => (
-          <button key={p.id} style={pillStyle(activeType === p.id)} onClick={() => setActiveType(p.id)}>{p.label}</button>
-        ))}
-
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            defaultValue={searchTerm}
-            onChange={e => handleSearch(e.target.value)}
-            placeholder="Search merchants, categories…"
-            style={{
-              padding: '7px 12px',
-              border: '1px solid var(--border-1)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 13,
-              fontFamily: 'var(--font-sans)',
-              outline: 'none',
-              width: 220,
-            }}
-          />
-          <select
-            value={sortKey}
-            onChange={e => setSortKey(e.target.value)}
-            style={{
-              padding: '7px 10px',
-              border: '1px solid var(--border-1)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 13,
-              fontFamily: 'var(--font-sans)',
-              background: 'var(--surface-card)',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </div>
+      {/* Category select */}
+      <div style={{ position: 'relative' }}>
+        <select value={activeCat} onChange={e => setActiveCat(e.target.value)} style={selectStyle}>
+          <option value="all">All Categories</option>
+          {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+        </select>
+        <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-3)" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
+
+      {/* Date range select */}
+      <div style={{ position: 'relative' }}>
+        <select value={dateRange} onChange={e => setDateRange(Number(e.target.value))} style={selectStyle}>
+          <option value={30}>Last 30 Days</option>
+          <option value={60}>Last 60 Days</option>
+          <option value={90}>Last 90 Days</option>
+        </select>
+        <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-3)" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+
+      {/* Sort select */}
+      <div style={{ position: 'relative' }}>
+        <select value={sortKey} onChange={e => setSortKey(e.target.value)} style={selectStyle}>
+          {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <svg style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-3)" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+
+      {/* Apply button */}
+      <button
+        onClick={onApply}
+        style={{
+          background: 'var(--primary)', color: 'var(--fg-inverse)',
+          border: 'none', borderRadius: 'var(--radius-md)',
+          padding: '10px 20px', fontSize: 12, fontWeight: 700,
+          textTransform: 'uppercase', letterSpacing: '0.08em',
+          fontFamily: 'var(--font-sans)', cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          transition: 'opacity var(--dur-fast) var(--ease-out)',
+        }}
+        onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+      >
+        Apply Filters
+      </button>
     </div>
   );
 }

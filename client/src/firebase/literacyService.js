@@ -10,7 +10,7 @@ const db = database;
 export async function writeBaselineLiteracy(userId, payload) {
   const baselineRef = doc(db, 'users', userId, 'literacy', 'baseline');
   const currentRef  = doc(db, 'users', userId, 'literacy', 'current');
-  const profileRef  = doc(db, 'users', userId, 'profile');
+  const profileRef  = doc(db, 'users', userId);
 
   const baselineDoc = {
     createdAt: serverTimestamp(),
@@ -126,7 +126,7 @@ export async function updateCurrentLiteracy(userId, updates) {
 }
 
 export async function writeSnapshot(userId, snapshotData) {
-  const snapshotsRef = collection(db, 'users', userId, 'literacy', 'snapshots');
+  const snapshotsRef = collection(db, 'users', userId, 'snapshots');
   await addDoc(snapshotsRef, {
     snapshotId: `snap_${Date.now()}`,
     createdAt: serverTimestamp(),

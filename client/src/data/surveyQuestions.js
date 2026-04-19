@@ -77,6 +77,7 @@ export const SURVEY_SCREENS = [
     scored: true,
     required: false,
     pillar: 'banking',
+    explanation: "Most banks with overdraft coverage will process the transaction and charge an overdraft fee (typically $25–$35). Some banks offer fee-free overdraft or linked savings protection — always worth knowing which plan you're on.",
     choices: [
       { value: 'a', label: 'The purchase is declined automatically', correct: false },
       { value: 'b', label: 'The bank covers it and may charge an overdraft fee', correct: true },
@@ -111,6 +112,7 @@ export const SURVEY_SCREENS = [
     scored: true,
     required: false,
     pillar: 'credit',
+    explanation: "Credit utilization is your balance divided by your credit limit — here that's $2,500 ÷ $5,000 = 50%. Lenders generally recommend staying below 30% to keep your score healthy. Utilization is recalculated every billing cycle, so paying down your balance has a fast impact.",
     choices: [
       { value: 'a', label: '25%', correct: false },
       { value: 'b', label: '50% — and this may be hurting your credit score', correct: true },

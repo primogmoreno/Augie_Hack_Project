@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/layout/TopBar';
 import Card from '../components/ui/Card';
-import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Icon, { ICONS } from '../components/ui/Icon';
 import CategoryIcon from '../components/ui/CategoryIcon';
@@ -13,11 +12,11 @@ import api from '../services/api';
 import { cacheGet, cacheSet } from '../services/cache';
 
 const FALLBACK_TXS = [
-  { icon: 'dining', name: 'Blue Bottle Coffee', sub: 'Today · 8:14 AM',  tag: 'Food & Dining', amt: -6.25             },
-  { icon: 'shopping', name: "Trader Joe's",     sub: 'Yesterday',        tag: 'Shopping',      amt: -84.30            },
-  { icon: 'entertainment', name: 'Netflix',     sub: 'Apr 14 · monthly', tag: 'Entertainment', amt: -15.49            },
-  { icon: 'income', name: 'Payroll — Acme Co.', sub: 'Apr 15',           tag: 'Income',        amt: 2450.00, pos: true },
-  { icon: 'dining', name: 'Blue Bottle Coffee', sub: 'Apr 13',           tag: 'Food & Dining', amt: -6.25             },
+  { icon: 'dining',       name: 'Blue Bottle Coffee', sub: 'Today · 8:14 AM',  tag: 'Food & Dining', amt: -6.25             },
+  { icon: 'shopping',     name: "Trader Joe's",       sub: 'Yesterday',        tag: 'Shopping',      amt: -84.30            },
+  { icon: 'entertainment',name: 'Netflix',            sub: 'Apr 14 · monthly', tag: 'Entertainment', amt: -15.49            },
+  { icon: 'income',       name: 'Payroll — Acme Co.', sub: 'Apr 15',           tag: 'Income',        amt: 2450.00, pos: true },
+  { icon: 'dining',       name: 'Blue Bottle Coffee', sub: 'Apr 13',           tag: 'Food & Dining', amt: -6.25             },
 ];
 
 const PLACEHOLDER_BUDGET = [
@@ -61,58 +60,14 @@ function extractCreditInfo(accounts, liabilities) {
   return { apr: parseFloat(apr.toFixed(2)), balance: parseFloat(balance.toFixed(2)) };
 }
 
-function buildInsights(summary, creditInfo) {
-  if (!summary) return [];
-  const insights = [];
-  const { category_totals = [], total_spent, savings_rate, national_savings_rate, savings_invested } = summary;
-
-  const top = category_totals.find(c => c.category !== 'Income' && c.category !== 'Savings & Investing');
-  if (top) {
-    const pct = total_spent > 0 ? Math.round((top.total / total_spent) * 100) : 0;
-    insights.push({
-      label: 'Top spending category',
-      value: top.category,
-      detail: `$${top.total.toLocaleString('en-US', { minimumFractionDigits: 2 })} · ${pct}% of total`,
-      color: top.color?.primary ?? 'var(--primary)',
-      light: top.color?.light  ?? 'var(--primary-muted)',
-    });
-  }
-
-  if (savings_invested > 0) {
-    insights.push({
-      label: 'Amount saved / invested',
-      value: `$${savings_invested.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-      detail: 'Money working for your future',
-      color: '#1F7A6B', light: '#EAF5F3',
-    });
-  }
-
-  if (typeof savings_rate === 'number' && typeof national_savings_rate === 'number') {
-    const diff  = (savings_rate - national_savings_rate).toFixed(1);
-    const ahead = savings_rate >= national_savings_rate;
-    insights.push({
-      label:  'Your savings rate',
-      value:  `${savings_rate}%`,
-      detail: ahead
-        ? `+${diff}% above the national average (${national_savings_rate}%)`
-        : `${Math.abs(diff)}% below the national average (${national_savings_rate}%)`,
-      color: ahead ? '#1F7A6B' : 'var(--danger)',
-      light: ahead ? '#EAF5F3' : '#FEF0F0',
-    });
-  }
-
-  if (creditInfo.apr > 15) {
-    insights.push({
-      label: 'Credit card APR', value: `${creditInfo.apr}%`,
-      detail: 'Above the national credit union average — worth reviewing',
-      color: 'var(--danger)', light: '#FEF0F0',
-    });
-  }
-
-  return insights.slice(0, 3);
+function getRiskLabel(summary) {
+  if (!summary) return { label: '—', sub: 'Connect bank to assess' };
+  const sr = summary.savings_rate ?? 0;
+  if (sr > 20) return { label: 'Stable / Low', sub: 'Your savings rate is strong' };
+  if (sr > 10) return { label: 'Moderate', sub: 'Consider increasing savings' };
+  return { label: 'Elevated', sub: 'Review your spending patterns' };
 }
 
-// Blurred card overlay for locked sections
 function LockedOverlay({ message }) {
   return (
     <div style={{
@@ -137,24 +92,23 @@ function LockedOverlay({ message }) {
 }
 
 export default function Dashboard() {
-  const [accounts, setAccounts]         = useState([]);
-  const [creditInfo, setCreditInfo]     = useState({ apr: 21.99, balance: 1284.55 });
-  const [recentTxs, setRecentTxs]       = useState(FALLBACK_TXS);
-  const [summary, setSummary]           = useState(null);
-  const [isConnected, setIsConnected]   = useState(null); // null=loading, true=yes, false=no
-  const [openPlaid, setOpenPlaid]       = useState(null);
+  const [accounts, setAccounts]           = useState([]);
+  const [creditInfo, setCreditInfo]       = useState({ apr: 21.99, balance: 1284.55 });
+  const [recentTxs, setRecentTxs]         = useState(FALLBACK_TXS);
+  const [summary, setSummary]             = useState(null);
+  const [isConnected, setIsConnected]     = useState(null);
+  const [openPlaid, setOpenPlaid]         = useState(null);
   const [showExplainer, setShowExplainer] = useState(false);
   const navigate = useNavigate();
 
-   useEffect(() => {
+  useEffect(() => {
     const cachedAccounts = cacheGet('accounts');
     if (cachedAccounts?.accounts?.length) {
       setAccounts(cachedAccounts.accounts);
       setCreditInfo(cachedAccounts.credit);
       setIsConnected(true);
     } else {
-      api
-        .get('/accounts')
+      api.get('/accounts')
         .then(({ data }) => {
           const mapped = mapPlaidAccounts(data.accounts, data.liabilities);
           const credit = extractCreditInfo(data.accounts, data.liabilities);
@@ -170,20 +124,17 @@ export default function Dashboard() {
     if (cachedTxs?.length) {
       setRecentTxs(cachedTxs);
     } else {
-      api
-        .get('/transactions')
+      api.get('/transactions')
         .then(({ data }) => {
           if (data.pending || !data.transactions?.length) return;
-
-          const mapped = data.transactions.slice(0, 5).map((t) => ({
+          const mapped = data.transactions.slice(0, 5).map(t => ({
             icon: t.merchant_icon || 'other',
             name: t.merchant || t.name || 'Unknown',
-            sub: t.date_formatted || t.date,
-            tag: t.category || 'Other',
-            amt: t.amount,
-            pos: t.type === 'credit' || t.amount < 0,
+            sub:  t.date_formatted || t.date,
+            tag:  t.category || 'Other',
+            amt:  t.amount,
+            pos:  t.type === 'credit' || t.amount < 0,
           }));
-
           setRecentTxs(mapped);
           cacheSet('transactions', mapped);
         })
@@ -194,8 +145,7 @@ export default function Dashboard() {
     if (cachedSummary) {
       setSummary(cachedSummary);
     } else {
-      api
-        .get('/summary?days=30')
+      api.get('/summary?days=30')
         .then(({ data }) => {
           if (!data.pending) {
             setSummary(data);
@@ -206,32 +156,38 @@ export default function Dashboard() {
     }
   }, []);
 
-
-  const insights      = buildInsights(summary, creditInfo);
   const topCategories = (summary?.category_totals ?? [])
     .filter(c => c.category !== 'Income' && c.category !== 'Savings & Investing')
     .slice(0, 4);
 
-    const user = JSON.parse(sessionStorage.getItem("user"));
-console.log(user.displayName); 
+  const user = JSON.parse(sessionStorage.getItem('user'));
   const greeting = (() => {
     const h = new Date().getHours();
-    if (h < 12) return `Good morning, ${user.displayName}!`;
-    if (h < 18) return `Good afternoon, ${user.displayName}!`;
-    return `Good evening, ${user.displayName}!`;
+    if (h < 12) return `Good morning, ${user?.displayName ?? 'there'}!`;
+    if (h < 18) return `Good afternoon, ${user?.displayName ?? 'there'}!`;
+    return `Good evening, ${user?.displayName ?? 'there'}!`;
   })();
 
-  const connected = isConnected === true;
-  const loading   = isConnected === null;
+  const connected  = isConnected === true;
+  const loading    = isConnected === null;
+  const totalValue = connected ? accounts.reduce((sum, a) => sum + a.bal, 0) : 0;
+  const riskLabel  = getRiskLabel(summary);
+
+  const aiInsightText = connected
+    ? (creditInfo.apr > 15
+        ? `Your ${creditInfo.apr}% APR is above the national average. Prioritizing this debt could save hundreds annually.`
+        : summary
+          ? `You spent $${(summary.total_spent ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} this month. Maintaining this trajectory improves your debt-to-income ratio.`
+          : 'Your accounts are connected. Explore the tools below to understand your money better.')
+    : 'Connect your bank to unlock personalized AI insights and tips tailored to your finances.';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-      {/* Hidden PlaidLink — exposes open() to the "Add account" button */}
       <PlaidLink onReady={openFn => setOpenPlaid(() => openFn)} />
 
       <TopBar
         title={greeting}
-        subtitle={connected ? "Here's where things stand." : "Connect your bank to get started."}
+        subtitle={connected ? "Here's where things stand." : 'Connect your bank to get started.'}
         right={
           <Button variant="secondary" size="sm" onClick={() => openPlaid?.()}>
             <Icon d={ICONS.plus} size={14} /> {connected ? 'Add account' : 'Connect bank'}
@@ -239,20 +195,13 @@ console.log(user.displayName);
         }
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)', animation: 'fadeIn var(--dur-slow) var(--ease-out)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px 72px', background: 'var(--bg-page)', animation: 'fadeIn var(--dur-slow) var(--ease-out)' }}>
 
         {/* ── NOT CONNECTED: prominent CTA banner ──────────────────── */}
         {!loading && !connected && (
-          <Card style={{
-            background: 'var(--primary)',
-            padding: '32px 36px', marginBottom: 24,
-          }}>
+          <Card style={{ background: 'var(--primary)', padding: '32px 36px', marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: 16, flexShrink: 0,
-                background: 'rgba(255,255,255,0.15)',
-                display: 'grid', placeItems: 'center', color: '#fff', fontSize: 28,
-              }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, flexShrink: 0, background: 'rgba(255,255,255,0.15)', display: 'grid', placeItems: 'center', color: '#fff', fontSize: 28 }}>
                 🏦
               </div>
               <div style={{ flex: 1 }}>
@@ -265,26 +214,12 @@ console.log(user.displayName);
                 <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', margin: '0 0 20px', lineHeight: 1.55 }}>
                   Once connected, you'll see your real account balances, spending breakdowns, AI-powered insights, and personalized tips — all in one place.
                 </p>
-                <Button
-                  variant="primary"
-                  onClick={() => openPlaid?.()}
-                  style={{ background: 'var(--fg-inverse)', color: 'var(--primary)', fontWeight: 700 }}
-                >
+                <Button variant="primary" onClick={() => openPlaid?.()} style={{ background: 'var(--fg-inverse)', color: 'var(--primary)', fontWeight: 700 }}>
                   <Icon d={ICONS.lock} size={14} /> Connect via Plaid — it's secure
                 </Button>
               </div>
-              {/* Preview list of what unlocks */}
-              <div style={{
-                flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10,
-                background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: '16px 20px',
-              }}>
-                {[
-                  'Real account balances',
-                  'Spending breakdown by category',
-                  'AI insights & tips',
-                  'Transaction history',
-                  'APR & savings rate',
-                ].map(item => (
+              <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: '16px 20px' }}>
+                {['Real account balances', 'Spending breakdown by category', 'AI insights & tips', 'Transaction history', 'APR & savings rate'].map(item => (
                   <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
                     <Icon d={ICONS.check} size={14} stroke={2} />
                     {item}
@@ -295,128 +230,59 @@ console.log(user.displayName);
           </Card>
         )}
 
-        {/* ── Account cards ─────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
-          {connected ? accounts.map((a, i) => (
-            <Card key={i} style={{ padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-2)' }}>
-                  {a.name}
-                </span>
-                <span style={{ fontSize: 11, color: 'var(--fg-3)' }}>{a.bank}</span>
-              </div>
-              <div className="money" style={{ fontSize: 28, fontWeight: 500, margin: '10px 0', color: a.bal < 0 ? 'var(--danger)' : 'var(--fg-1)' }}>
-                {a.bal < 0 ? '−' : ''}${Math.abs(a.bal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-              <Badge tone={a.tone}>{a.delta}</Badge>
-            </Card>
-          )) : ['Checking', 'Savings', 'Credit'].map(name => (
-            <Card key={name} style={{ padding: 18, opacity: loading ? 0.5 : 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-2)' }}>
-                  {name}
-                </span>
-                <span style={{ fontSize: 11, color: 'var(--fg-3)' }}>
-                  {loading ? '···' : '— not connected —'}
-                </span>
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 500, margin: '10px 0', color: 'var(--fg-3)', fontFamily: 'var(--font-mono)' }}>
-                — — —
-              </div>
-              <Badge tone="default">{loading ? 'Loading…' : 'Connect to view'}</Badge>
-            </Card>
-          ))}
-        </div>
-
-        {/* ── Quick insights row (only when connected + data loaded) ── */}
-        {connected && insights.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${insights.length}, 1fr)`, gap: 14, marginBottom: 24 }}>
-            {insights.map((ins, i) => (
-              <div key={i} style={{ background: ins.light, border: `1px solid ${ins.color}22`, borderRadius: 14, padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: ins.color, marginBottom: 6 }}>
-                  {ins.label}
+        {/* ── HERO FINANCIAL SNAPSHOT ──────────────────────────────── */}
+        {connected && (
+          <section style={{ marginBottom: 40 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '7fr 5fr', gap: 24, alignItems: 'flex-end' }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3em', color: 'var(--accent)', marginBottom: 14 }}>
+                  Total Portfolio Value
                 </div>
-                <div className="money" style={{ fontSize: 22, fontWeight: 600, color: 'var(--fg-1)', marginBottom: 4 }}>
-                  {ins.value}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--fg-3)', lineHeight: 1.4 }}>{ins.detail}</div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 72, fontWeight: 300, letterSpacing: '-0.04em', color: 'var(--primary)', lineHeight: 1, margin: 0 }}>
+                  ${Math.floor(Math.abs(totalValue)).toLocaleString()}
+                  <span style={{ fontSize: 40, opacity: 0.4 }}>
+                    .{(Math.abs(totalValue) % 1).toFixed(2).slice(2)}
+                  </span>
+                </h3>
               </div>
-            ))}
-          </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', paddingBottom: 8 }}>
+                {accounts.length > 0 ? accounts.map((a, i) => (
+                  <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16 }}>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 4 }}>{a.name}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: a.name === 'Credit' ? 'var(--danger)' : 'var(--primary)' }}>
+                      {a.name === 'Credit' ? '−' : ''}${Math.abs(a.bal).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                )) : ['Checking', 'Savings', 'Credit'].map((name, i) => (
+                  <div key={i} style={{ borderLeft: '1px solid var(--border-2)', paddingLeft: 16 }}>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--fg-3)', letterSpacing: '0.1em', marginBottom: 4 }}>{name}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--fg-3)' }}>—</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         )}
 
-        {/* ── AI Insight hero ────────────────────────────────────────── */}
-        <Card style={{
-          background: connected ? 'var(--surface-low)' : 'var(--surface-low)',
-          padding: 24, marginBottom: 24,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-              background: connected ? 'var(--primary)' : 'var(--surface-low)',
-              color: connected ? 'var(--fg-inverse)' : 'var(--fg-3)',
-              display: 'grid', placeItems: 'center', fontWeight: 700,
-            }}>
-              {connected ? '✦' : <Icon d={ICONS.lock} size={18} />}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: connected ? 'var(--accent)' : 'var(--fg-3)', marginBottom: 8 }}>
-                {connected ? "This week's insight" : 'AI insights — locked'}
-              </div>
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, lineHeight: 1.3, color: connected ? 'var(--fg-1)' : 'var(--fg-3)', marginBottom: 14 }}>
-                {connected
-                  ? (creditInfo.apr > 15
-                      ? `Your credit card APR is ${creditInfo.apr}% — that's above the national credit union average.`
-                      : summary
-                        ? `You spent $${(summary.total_spent ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} this month. Get a full breakdown below.`
-                        : 'Your accounts are connected. Use the tools below to understand your money better.')
-                  : 'Connect your bank to unlock personalized AI insights, spending patterns, and tips tailored to your finances.'}
-              </p>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {connected ? (
-                  <>
-                    <Button variant="dark" onClick={() => navigate('/coach')}>Talk to coach</Button>
-                    <Button variant="ghost" onClick={() => navigate('/analyze')}>
-                      <Icon d={ICONS.zap} size={14} /> Analyze my spending
-                    </Button>
-                    <Button variant="ghost" onClick={() => setShowExplainer(true)}>What's "utilization"?</Button>
-                  </>
-                ) : (
-                  <Button variant="secondary" onClick={() => openPlaid?.()}>
-                    <Icon d={ICONS.plus} size={14} /> Connect bank to unlock
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </Card>
+        {/* ── BENTO GRID: Spending | Activity | AI Insight ─────────── */}
+        <section style={{ display: 'grid', gridTemplateColumns: '4fr 5fr 3fr', gap: 16, marginBottom: 28 }}>
 
-        {/* ── Rate Reality Check ─────────────────────────────────────── */}
-        <div style={{ marginBottom: 24 }}>
-          <RateRealityCheck userApr={creditInfo.apr} userBalance={creditInfo.balance} />
-        </div>
-
-        {/* ── Spending breakdown + Activity ─────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 14 }}>
-
-          {/* Spending by category */}
+          {/* Col 1: Spending Breakdown */}
           <div style={{ position: 'relative' }}>
-            <Card style={{ padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, margin: 0 }}>
-                  {connected && summary ? 'Last 30 days' : 'Spending preview'}
-                </h3>
-                {connected && (
-                  <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')}>See all</Button>
-                )}
+            <div style={{ background: 'var(--surface-low)', borderRadius: 'var(--radius-xl)', padding: '24px', height: '100%', boxSizing: 'border-box' }}>
+              <div style={{ marginBottom: 20 }}>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 20, color: 'var(--primary)', margin: '0 0 4px' }}>
+                  Spending Breakdown
+                </h4>
+                <p style={{ fontSize: 12, color: 'var(--fg-3)', margin: 0 }}>Last 30 Days Analysis</p>
               </div>
-
               {(connected && topCategories.length > 0 ? topCategories.map(cat => ({
-                name: cat.category, pct: Math.round((cat.total / (topCategories[0]?.total ?? 1)) * 100),
+                name: cat.category,
+                pct:  Math.round((cat.total / (topCategories[0]?.total ?? 1)) * 100),
                 color: cat.color?.primary ?? 'var(--primary)',
                 label: `$${cat.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
               })) : PLACEHOLDER_BUDGET).map(b => (
-                <div key={b.name} style={{ marginBottom: 14 }}>
+                <div key={b.name} style={{ marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
                     <span style={{ fontWeight: 500 }}>{b.name}</span>
                     <span className="money" style={{ color: 'var(--fg-2)' }}>{b.label ?? '—'}</span>
@@ -426,55 +292,127 @@ console.log(user.displayName);
                   </div>
                 </div>
               ))}
-            </Card>
-            {!connected && (
-              <LockedOverlay message="Connect your bank to see real spending by category" />
-            )}
+            </div>
+            {!connected && <LockedOverlay message="Connect your bank to see real spending by category" />}
           </div>
 
-          {/* Recent activity */}
+          {/* Col 2: Recent Activity */}
           <div style={{ position: 'relative' }}>
-            <Card style={{ padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, margin: 0 }}>Recent activity</h3>
+            <Card style={{ padding: 24, height: '100%', boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 20, color: 'var(--primary)', margin: 0 }}>
+                  Recent Activity
+                </h4>
                 {connected && (
-                  <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')}>See all</Button>
+                  <button
+                    onClick={() => navigate('/transactions')}
+                    style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-3)', background: 'none', border: 'none', borderBottom: '1px solid var(--border-1)', paddingBottom: 2, cursor: 'pointer' }}
+                  >
+                    View All Archive
+                  </button>
                 )}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {FALLBACK_TXS.map((t, i) => (
-                  <div key={i} className="tx-row" style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
-                    borderBottom: i < FALLBACK_TXS.length - 1 ? '1px solid var(--border-1)' : 0,
-                  }}>
-                    <div className="category-icon-box" style={{ width: 32, height: 32, borderRadius: 'var(--radius-md)', background: 'var(--surface-low)', color: 'var(--fg-2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                      <CategoryIcon iconKey={t.icon} size={16} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {connected ? t.name : t.name}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--fg-3)' }}>{connected ? t.sub : '—'} · {t.tag}</div>
-                    </div>
-                    <div className="money" style={{ fontSize: 14, fontWeight: 500, color: t.pos ? 'var(--success)' : 'var(--fg-1)', flexShrink: 0 }}>
-                      {t.pos ? '+' : '−'}${Math.abs(t.amt).toFixed(2)}
-                    </div>
+              {(connected ? recentTxs : FALLBACK_TXS).slice(0, 5).map((t, i, arr) => (
+                <div key={i} className="tx-row" style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '12px 8px',
+                  borderBottom: i < arr.length - 1 ? '1px solid var(--border-1)' : 0,
+                }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface-low)', color: 'var(--primary)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <CategoryIcon iconKey={t.icon} size={18} />
                   </div>
-                ))}
-              </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--fg-3)' }}>{t.tag} · {connected ? t.sub : '—'}</div>
+                  </div>
+                  <div className="money" style={{ fontSize: 14, fontWeight: 500, color: t.pos ? 'var(--success)' : 'var(--fg-1)', flexShrink: 0 }}>
+                    {t.pos ? '+' : '−'}${Math.abs(t.amt).toFixed(2)}
+                  </div>
+                </div>
+              ))}
             </Card>
-            {!connected && (
-              <LockedOverlay message="Connect your bank to see your real transactions" />
-            )}
+            {!connected && <LockedOverlay message="Connect your bank to see your real transactions" />}
           </div>
+
+          {/* Col 3: AI Insight + Risk Score */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* AI Insight card */}
+            <div style={{
+              background: 'var(--primary)', borderRadius: 'var(--radius-xl)', padding: 28,
+              flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 280,
+            }}>
+              <div>
+                <div style={{ fontSize: 24, color: 'rgba(255,179,157,0.8)', marginBottom: 14 }}>✦</div>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 20, color: 'var(--fg-inverse)', lineHeight: 1.3, margin: '0 0 12px' }}>
+                  {connected ? (creditInfo.apr > 15 ? 'The Cost of Credit' : 'The Path to Liquidity') : 'Unlock Insights'}
+                </h4>
+                <p style={{ fontSize: 12, lineHeight: 1.7, color: 'rgba(176,205,187,0.9)', margin: 0 }}>
+                  {aiInsightText}
+                </p>
+              </div>
+              <div style={{ paddingTop: 20 }}>
+                <button
+                  onClick={() => navigate('/coach')}
+                  style={{ background: 'none', border: 'none', borderBottom: '1px solid rgba(176,205,187,0.4)', paddingBottom: 4, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'rgba(250,249,245,0.75)', cursor: 'pointer' }}
+                >
+                  Full Strategy Report
+                </button>
+              </div>
+            </div>
+
+            {/* Risk Score card */}
+            <div style={{ background: 'rgba(79,27,8,0.08)', borderRadius: 'var(--radius-xl)', padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700, color: 'var(--fg-3)', marginBottom: 4 }}>
+                  Risk Score
+                </div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--primary)' }}>
+                  {connected ? riskLabel.label : '—'}
+                </div>
+              </div>
+              {/* Shield icon */}
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+          </div>
+        </section>
+
+        {/* ── RATE REALITY CHECK ────────────────────────────────────── */}
+        <div style={{ marginBottom: 28 }}>
+          <RateRealityCheck userApr={creditInfo.apr} userBalance={creditInfo.balance} />
         </div>
 
-        {/* ── Quick actions ─────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: 14 }}>
+        {/* ── EDITORIAL QUOTE SECTION ───────────────────────────────── */}
+        {connected && (
+          <section style={{ borderTop: '1px solid var(--border-1)', paddingTop: 56, paddingBottom: 48, display: 'flex', gap: 0, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div style={{ maxWidth: 460, marginRight: 48 }}>
+              <h5 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 32, color: 'var(--primary)', lineHeight: 1.3, margin: '0 0 16px', fontWeight: 400 }}>
+                "Financial literacy is not just about numbers, but about the freedom to navigate the world on your own terms."
+              </h5>
+              <p style={{ fontSize: 13, color: 'var(--fg-3)', margin: 0, lineHeight: 1.6 }}>
+                From the <em>Institutional Quarterly Review</em>, Autumn Series 2024.
+              </p>
+            </div>
+            <div style={{ flex: 1, minWidth: 240, borderLeft: '1px solid var(--border-1)', paddingLeft: 48 }}>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--accent)', fontWeight: 700, marginBottom: 8 }}>
+                Projected Net Worth (1 yr)
+              </div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, color: 'var(--primary)', lineHeight: 1 }}>
+                {totalValue > 0 ? `$${Math.round(totalValue * 1.142).toLocaleString()}` : '—'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>
+                ↑ +14.2% from current
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── QUICK ACTIONS ─────────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: connected ? 0 : 14 }}>
           {[
-            { label: 'Full spending analysis', sub: connected ? 'AI breakdown of 90 days'  : 'Requires bank connection', icon: ICONS.zap,     path: '/analyze',      accent: 'var(--primary)', disabled: !connected },
-            { label: 'Transaction history',    sub: connected ? 'Filter, search, export'    : 'Requires bank connection', icon: ICONS.list,    path: '/transactions', accent: 'var(--primary)', disabled: !connected },
-            { label: 'Run a simulation',       sub: 'Budget what-if scenarios',              icon: ICONS.sliders, path: '/simulate',     accent: 'var(--primary)', disabled: false },
+            { label: 'Full spending analysis', sub: connected ? 'AI breakdown of 90 days' : 'Requires bank connection', icon: ICONS.zap,     path: '/analyze',      disabled: !connected },
+            { label: 'Transaction history',    sub: connected ? 'Filter, search, export'  : 'Requires bank connection', icon: ICONS.list,    path: '/transactions', disabled: !connected },
+            { label: 'Run a simulation',       sub: 'Budget what-if scenarios',            icon: ICONS.sliders, path: '/simulate',     disabled: false },
           ].map(card => (
             <button
               key={card.path}
@@ -488,11 +426,7 @@ console.log(user.displayName);
                 opacity: card.disabled ? 0.55 : 1,
               }}
             >
-              <div style={{
-                width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                background: `${card.accent}18`, color: card.accent,
-                display: 'grid', placeItems: 'center',
-              }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: 'var(--primary-muted)', color: 'var(--primary)', display: 'grid', placeItems: 'center' }}>
                 <Icon d={card.disabled ? ICONS.lock : card.icon} size={16} />
               </div>
               <div>

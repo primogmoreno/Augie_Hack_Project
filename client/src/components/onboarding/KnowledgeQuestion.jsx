@@ -10,8 +10,6 @@ export default function KnowledgeQuestion({ screen, selectedValue, onSelect, onB
     setRevealed(true);
   };
 
-  const correctChoice = screen.choices.find(c => c.correct);
-
   return (
     <div style={{ animation: 'fadeIn var(--dur-base) var(--ease-out)' }}>
       <div style={{ marginBottom: 28 }}>
@@ -49,19 +47,22 @@ export default function KnowledgeQuestion({ screen, selectedValue, onSelect, onB
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
         {screen.choices.map(choice => {
           const isSelected = selectedValue === choice.value;
-          const isCorrect  = choice.correct;
+
           let borderColor = 'var(--border-1)';
           let bg = 'var(--surface-card)';
           let labelColor = 'var(--fg-1)';
+          let fontWeight = 400;
 
-          if (revealed) {
-            if (isSelected && isCorrect)  { borderColor = 'var(--success)'; bg = 'var(--success-bg)'; labelColor = 'var(--success)'; }
-            else if (isSelected)          { borderColor = 'var(--danger)';  bg = 'var(--danger-bg)';  labelColor = 'var(--danger)'; }
-            else if (isCorrect)           { borderColor = 'var(--success)'; bg = 'var(--success-bg)'; labelColor = 'var(--success)'; }
-          } else if (isSelected) {
+          if (revealed && isSelected) {
             borderColor = 'var(--primary)';
             bg = 'var(--primary-muted)';
             labelColor = 'var(--primary)';
+            fontWeight = 600;
+          } else if (!revealed && isSelected) {
+            borderColor = 'var(--primary)';
+            bg = 'var(--primary-muted)';
+            labelColor = 'var(--primary)';
+            fontWeight = 600;
           }
 
           return (
@@ -77,46 +78,41 @@ export default function KnowledgeQuestion({ screen, selectedValue, onSelect, onB
                 cursor: revealed ? 'default' : 'pointer',
                 textAlign: 'left',
                 transition: 'all var(--dur-fast) var(--ease-out)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
               }}
             >
               <span style={{
                 fontSize: 14,
-                fontWeight: isSelected || (revealed && isCorrect) ? 600 : 400,
+                fontWeight,
                 color: labelColor,
                 fontFamily: 'var(--font-sans)',
                 lineHeight: 1.4,
               }}>
                 {choice.label}
               </span>
-              {revealed && isCorrect && <span style={{ fontSize: 16 }}>✓</span>}
-              {revealed && isSelected && !isCorrect && <span style={{ fontSize: 16 }}>✗</span>}
             </button>
           );
         })}
       </div>
 
-      {revealed && (
+      {/* Neutral educational callout — shown after selection */}
+      {revealed && screen.explanation && (
         <div style={{
           background: 'var(--surface-low)',
           borderRadius: 'var(--radius-lg)',
-          padding: '14px 16px',
+          padding: '14px 16px 14px 20px',
           marginBottom: 24,
           fontSize: 13,
           color: 'var(--fg-2)',
-          lineHeight: 1.55,
+          lineHeight: 1.6,
           borderLeft: '3px solid var(--primary)',
-          paddingLeft: 16,
+          display: 'flex',
+          gap: 10,
+          alignItems: 'flex-start',
         }}>
-          {selectedValue === correctChoice?.value
-            ? '✓ Correct! '
-            : `The correct answer is: "${correctChoice?.label}". `}
-          {selectedValue !== correctChoice?.value
-            ? "Don't worry — this is what FinLit is here to help with."
-            : 'Great financial awareness.'}
+          <svg style={{ flexShrink: 0, marginTop: 1 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{screen.explanation}</span>
         </div>
       )}
 
