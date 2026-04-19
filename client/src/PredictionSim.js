@@ -88,7 +88,16 @@ randomLifeEvents = {
 }
 
 addEventListener('DOMContentLoaded', () => {
+    userState = JSON.parse(sessionStorage.getItem('userState')) || userState;
+    economyState = JSON.parse(sessionStorage.getItem('economyState')) || economyState;
 
+    document.getElementById('startButton').addEventListener('click', startSimulation);
+    document.getElementById('closeEventButton').addEventListener('click', closeEvent);
+    document.getElementById('restartButton').addEventListener('click', () => {
+        window.location.href = "PredictionSim.html";
+    });
+    document.getElementById('continueButton').addEventListener('click', simulateYear);
+});
 function startSimulation(){
     //initialize user state and economy state
     userState.age = document.getElementById('ageInput').value;
@@ -97,14 +106,16 @@ function startSimulation(){
     userState.expenses = document.getElementById('expensesInput').value;
     userState.investments = document.getElementById('investmentsInput').value;
     
+    sessionStorage.setItem('userState', JSON.stringify(userState));
+    sessionStorage.setItem('economyState', JSON.stringify(economyState));
     window.location.href = "bitMoney.html";
-    while(userState.age < 80) {
-        simulateYear();
-        userState.age += advanceTime;
-    }
 }
 
 function simulateYear() {
+    if(userState.age >= 80) {
+        alert("Simulation complete! You lived to be " + userState.age + " years old.");
+        return;
+    }
     // Update user state based on economy
     userState.age += advanceTime;
     userState.cash += userState.income * advanceTime;
@@ -253,4 +264,3 @@ function displayRandomEvent(event) {
 function closeEvent(){
     document.getElementById('randomEvent').style.display = 'none';
 }
-});

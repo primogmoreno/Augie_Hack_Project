@@ -33,12 +33,13 @@
             <label><input type="checkbox" value="getMarried">Get Married</label>
             <label><input type="checkbox" value="getDivorce">Get a Divorce</label>
         </form>
-        <button onclick="simulateYear()">Apply Changes</button>
+        <button id="continueButton">Apply Changes</button>
     </progression>
     <div id="randomEvent" style = "display:none; position: fixed; inset:0; display: flex; align-items:center; justify-content:center;">
         <h3>Life Event: <span id="eventTitle"></span></h3>
         <p id="eventDescription"></p>
-        <button onclick="closeEvent()">Close</button>
+        <button id="closeEventButton">Close</button>
     </div>
+    <button id="restartButton" onclick="window.location.href = 'PredictionSim.html';">Restart Simulation</button>
 </body>
 </html>
