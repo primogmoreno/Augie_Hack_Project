@@ -1,4 +1,4 @@
-# F.I.R.E. — Financial Literacy, Retire Early
+# F.I.R.E. — Financial Literacy: Retire Early
 
 A financial literacy web app built for HackAugie 2026. FinLit connects users to their real bank data via Plaid, analyzes their spending with Google Gemini AI, and benchmarks their interest rates against NCUA national averages — so they can have smarter conversations with their credit union.
 
