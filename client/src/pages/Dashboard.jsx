@@ -9,6 +9,7 @@ import RateRealityCheck from '../components/dashboard/RateRealityCheck';
 import Explainer from '../components/dashboard/Explainer';
 import PlaidLink from '../components/plaid/PlaidLinkButton';
 import api from '../services/api';
+import { cacheGet, cacheSet } from '../services/cache';
 
 const FALLBACK_TXS = [
   { icon: ICONS.coffee, name: 'Blue Bottle Coffee', sub: 'Today · 8:14 AM',  tag: 'Dining',       amt: -6.25             },
@@ -144,51 +145,88 @@ export default function Dashboard() {
   const [showExplainer, setShowExplainer] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    api.get('/accounts')
-      .then(({ data }) => {
-        const mapped = mapPlaidAccounts(data.accounts, data.liabilities);
-        setAccounts(mapped);
-        setCreditInfo(extractCreditInfo(data.accounts, data.liabilities));
-        setIsConnected(true);
-      })
-      .catch(() => setIsConnected(false));
+   useEffect(() => {
+    const cachedAccounts = cacheGet('accounts');
+    if (cachedAccounts?.accounts?.length) {
+      setAccounts(cachedAccounts.accounts);
+      setCreditInfo(cachedAccounts.credit);
+      setIsConnected(true);
+    } else {
+      api
+        .get('/accounts')
+        .then(({ data }) => {
+          const mapped = mapPlaidAccounts(data.accounts, data.liabilities);
+          const credit = extractCreditInfo(data.accounts, data.liabilities);
+          setAccounts(mapped);
+          setCreditInfo(credit);
+          setIsConnected(true);
+          cacheSet('accounts', { accounts: mapped, credit });
+        })
+        .catch(() => setIsConnected(false));
+    }
 
-    api.get('/transactions')
-      .then(({ data }) => {
-        if (data.pending || !data.transactions?.length) return;
-        const iconFor = cat => {
-          const c = (cat ?? '').toLowerCase();
-          if (c.includes('food') || c.includes('restaurant') || c.includes('coffee')) return ICONS.coffee;
-          if (c.includes('grocer') || c.includes('supermarket'))                       return ICONS.cart;
-          return ICONS.repeat;
-        };
-        setRecentTxs(data.transactions.slice(0, 5).map(t => ({
-          icon: iconFor(t.personal_finance_category?.primary ?? t.category?.[0]),
-          name: t.name,
-          sub:  new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          tag:  t.category ?? 'Other',
-          amt:  t.amount,
-          pos:  t.amount < 0,
-        })));
-      })
-      .catch(() => {});
+    const cachedTxs = cacheGet('transactions');
+    if (cachedTxs?.length) {
+      setRecentTxs(cachedTxs);
+    } else {
+      api
+        .get('/transactions')
+        .then(({ data }) => {
+          if (data.pending || !data.transactions?.length) return;
+          const iconFor = (cat) => {
+            const c = (cat ?? '').toLowerCase();
+            if (c.includes('food') || c.includes('restaurant') || c.includes('coffee')) return ICONS.coffee;
+            if (c.includes('grocer') || c.includes('supermarket')) return ICONS.cart;
+            return ICONS.repeat;
+          };
 
-    api.get('/summary?days=30')
-      .then(({ data }) => { if (!data.pending) setSummary(data); })
-      .catch(() => {});
+          const mapped = data.transactions.slice(0, 5).map((t) => ({
+            icon: iconFor(t.personal_finance_category?.primary ?? t.category?.[0]),
+            name: t.name,
+            sub: new Date(t.date).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            }),
+            tag: t.category ?? 'Other',
+            amt: t.amount,
+            pos: t.amount < 0,
+          }));
+
+          setRecentTxs(mapped);
+          cacheSet('transactions', mapped);
+        })
+        .catch(() => {});
+    }
+
+    const cachedSummary = cacheGet('summary');
+    if (cachedSummary) {
+      setSummary(cachedSummary);
+    } else {
+      api
+        .get('/summary?days=30')
+        .then(({ data }) => {
+          if (!data.pending) {
+            setSummary(data);
+            cacheSet('summary', data);
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
+
 
   const insights      = buildInsights(summary, creditInfo);
   const topCategories = (summary?.category_totals ?? [])
     .filter(c => c.category !== 'Income' && c.category !== 'Savings & Investing')
     .slice(0, 4);
 
+    const user = JSON.parse(sessionStorage.getItem("user"));
+console.log(user.displayName); 
   const greeting = (() => {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning.';
-    if (h < 18) return 'Good afternoon.';
-    return 'Good evening.';
+    if (h < 12) return `Good morning, ${user.displayName}!`;
+    if (h < 18) return `Good afternoon, ${user.displayName}!`;
+    return `Good evening, ${user.displayName}!`;
   })();
 
   const connected = isConnected === true;

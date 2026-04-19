@@ -10,6 +10,7 @@ import Icon, { ICONS } from '../components/ui/Icon';
 import Card from '../components/ui/Card';
 import PlaidLink from '../components/plaid/PlaidLinkButton';
 import api from '../services/api';
+import { cacheGet, cacheSet } from '../services/cache';
 
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState([]);
@@ -33,22 +34,36 @@ export default function TransactionHistory() {
         api.get(`/transactions?days=${days}`),
         api.get(`/summary?days=${days}`),
       ]);
-      setIsConnected(true);
-      if (!txRes.data.pending) setTransactions(txRes.data.transactions ?? []);
-      if (!sumRes.data.pending) setSummary(sumRes.data);
-    } catch (err) {
-      if (err.response?.status === 401) {
-        setIsConnected(false);
-      } else {
-        setIsConnected(true);
-        setError('Failed to load transactions. Please try again.');
-      }
+
+      const transactions = txRes.data.pending
+        ? []
+        : (txRes.data.transactions ?? []);
+      const summary = sumRes.data.pending ? null : sumRes.data;
+      if (transactions.length) setTransactions(transactions);
+      if (summary) setSummary(summary);
+      return { transactions, summary }; // return so useEffect can cache it
+    } catch {
+      setError("Failed to load transactions. Please try again.");
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchData(dateRange); }, [dateRange]);
+  useEffect(() => {
+    const cached = cacheGet(`transactions_${dateRange}`);
+    if (cached) {
+      setTransactions(cached.transactions ?? []);
+      setSummary(cached.summary);
+      setIsConnected(true);
+      return; // skip fetch if cache is fresh
+    } 
+    fetchData(dateRange).then((data) => {
+      if (data) cacheSet(`transactions_${dateRange}`, data);
+    });
+    setIsConnected(true); // if fetchData doesn't throw, we're connected. If not, error state will show.
+  }, [dateRange]);
+
 
   const categories = useMemo(() =>
     [...new Set(transactions.map(t => t.category))].sort(),
