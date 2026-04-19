@@ -152,7 +152,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const cachedAccounts = cacheGet('accounts');
-    if (cachedAccounts?.accounts?.length) {
+    if (cachedAccounts) {
       setAccounts(cachedAccounts.accounts);
       setCreditInfo(cachedAccounts.credit);
       setIsConnected(true);
@@ -170,7 +170,7 @@ export default function Dashboard() {
     }
 
     const cachedTxs = cacheGet('transactions');
-    if (cachedTxs?.length) {
+    if (cachedTxs) {
       setRecentTxs(cachedTxs);
     } else {
       api.get('/transactions')
