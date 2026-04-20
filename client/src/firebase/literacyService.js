@@ -1,7 +1,7 @@
 import { database } from '../firebase-config';
 import {
   doc, getDoc, setDoc, updateDoc, addDoc,
-  collection, serverTimestamp, arrayUnion,
+  collection, serverTimestamp, arrayUnion, arrayRemove,
   query, orderBy, getDocs,
 } from 'firebase/firestore';
 import { computeArchetype } from '../utils/surveyScoring';
@@ -167,6 +167,31 @@ export async function recordDictionaryTermsRead(userId, termIds) {
   }
 
   return false;
+}
+
+// ─── Dictionary starring ──────────────────────────────────────────────
+// Backward-compatible: if the user's literacy/current doc has no
+// `dictionaryTermsStarred` field, arrayUnion creates it. Reads elsewhere
+// should default missing field to an empty array.
+
+export async function recordDictionaryTermsStarred(userId, termId, action) {
+  const currentRef = doc(db, 'users', userId, 'literacy', 'current');
+  const snap = await getDoc(currentRef);
+  if (!snap.exists()) return;
+
+  const op = action === 'remove' ? arrayRemove(termId) : arrayUnion(termId);
+  await updateDoc(currentRef, {
+    dictionaryTermsStarred: op,
+    lastUpdatedAt: serverTimestamp(),
+    lastUpdateReason: `${action === 'remove' ? 'Unstarred' : 'Starred'} term: ${termId}`,
+  });
+}
+
+export async function getDictionaryTermsStarred(userId) {
+  const currentRef = doc(db, 'users', userId, 'literacy', 'current');
+  const snap = await getDoc(currentRef);
+  if (!snap.exists()) return [];
+  return snap.data().dictionaryTermsStarred ?? [];
 }
 
 export async function recordModuleComplete(userId, moduleId, scoreImpact) {

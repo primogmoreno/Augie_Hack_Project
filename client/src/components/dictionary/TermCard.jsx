@@ -1,10 +1,13 @@
 import { CATEGORIES } from '../../data/dictionaryCategories';
 import TermCardExpanded from './TermCardExpanded';
+import StarButton from './StarButton';
 
 export default function TermCard({
   term,
   isExpanded,
   isRead,
+  isStarred,
+  onToggleStar,
   onToggle,
   onMarkRead,
   onNavigateToTerm,
@@ -12,11 +15,13 @@ export default function TermCard({
   contextLoading,
   isConnected,
   activeCat,
+  hideChevron,
 }) {
   const cat = CATEGORIES.find(c => c.id === term.cat);
 
   return (
     <div
+      data-term-id={term.id}
       style={{
         gridColumn: isExpanded ? '1 / -1' : undefined,
         padding: '1rem 1.25rem',
@@ -24,10 +29,13 @@ export default function TermCard({
         boxShadow: 'var(--shadow-sm)',
         background: 'var(--surface-card)',
         cursor: isExpanded ? 'default' : 'pointer',
-        transition: 'border-color 0.15s',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+        outline: 'none',
       }}
       onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.borderColor = 'var(--border-2)'; }}
       onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.borderColor = 'var(--border-1)'; }}
+      onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px var(--primary)'; }}
+      onBlur={e => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
       onClick={() => { if (!isExpanded) onToggle(term.id); }}
       role="button"
       tabIndex={0}
@@ -72,30 +80,41 @@ export default function TermCard({
           </div>
         </div>
 
-        <svg
-          viewBox="0 0 24 24"
-          width={16}
-          height={16}
-          fill="none"
-          stroke="var(--fg-3)"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            flexShrink: 0,
-            marginTop: 2,
-            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s ease',
-          }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 2 }}>
+          {onToggleStar && (
+            <StarButton
+              isStarred={!!isStarred}
+              onClick={(e) => { e.stopPropagation(); onToggleStar(term.id); }}
+              size={16}
+            />
+          )}
+          {!hideChevron && (
+            <svg
+              viewBox="0 0 24 24"
+              width={16}
+              height={16}
+              fill="none"
+              stroke="var(--fg-3)"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s ease',
+              }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          )}
+        </div>
       </div>
 
       {isExpanded && (
         <TermCardExpanded
           term={term}
           isRead={isRead}
+          isStarred={isStarred}
+          onToggleStar={onToggleStar}
           onMarkRead={onMarkRead}
           onClose={() => onToggle(null)}
           onNavigateToTerm={onNavigateToTerm}

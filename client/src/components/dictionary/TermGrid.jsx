@@ -9,6 +9,8 @@ export default function TermGrid({
   expandedTermId,
   onToggle,
   isRead,
+  isStarred,
+  onToggleStar,
   onMarkRead,
   onNavigateToTerm,
   contextData,
@@ -64,19 +66,22 @@ export default function TermGrid({
         gap: 10,
       }}>
         {terms.map(term => (
-          <TermCard
-            key={term.id}
-            term={term}
-            isExpanded={expandedTermId === term.id}
-            isRead={isRead(term.id)}
-            onToggle={onToggle}
-            onMarkRead={onMarkRead}
-            onNavigateToTerm={onNavigateToTerm}
-            contextData={contextData}
-            contextLoading={contextLoading}
-            isConnected={isConnected}
-            activeCat={activeCat}
-          />
+          <div key={term.id} id={`term-${term.id}`} style={{ gridColumn: expandedTermId === term.id ? '1 / -1' : undefined }}>
+            <TermCard
+              term={term}
+              isExpanded={expandedTermId === term.id}
+              isRead={isRead(term.id)}
+              isStarred={isStarred ? isStarred(term.id) : false}
+              onToggleStar={onToggleStar}
+              onToggle={onToggle}
+              onMarkRead={onMarkRead}
+              onNavigateToTerm={onNavigateToTerm}
+              contextData={contextData}
+              contextLoading={contextLoading}
+              isConnected={isConnected}
+              activeCat={activeCat}
+            />
+          </div>
         ))}
       </div>
     </div>

@@ -3,7 +3,7 @@ import RelatedChip from './RelatedChip';
 import PersonalContextBlock from './PersonalContextBlock';
 import { getPersonalContextString } from '../../utils/dictionaryFilters';
 
-export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, onNavigateToTerm, contextData, contextLoading, isConnected }) {
+export default function TermCardExpanded({ term, isRead, isStarred, onToggleStar, onMarkRead, onClose, onNavigateToTerm, contextData, contextLoading, isConnected, stack = false, hideClose = false }) {
   const navigate = useNavigate();
   const contextString = term.hasPersonalData
     ? getPersonalContextString(contextData, term.personalContextKey)
@@ -18,7 +18,7 @@ export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, on
     <div style={{ marginTop: 16 }}>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
+        gridTemplateColumns: stack ? '1fr' : '1fr 1fr',
         gap: 24,
       }}
         className="term-expanded-grid"
@@ -107,22 +107,59 @@ export default function TermCardExpanded({ term, isRead, onMarkRead, onClose, on
               {isRead ? 'Read ✓' : 'Mark as read'}
             </button>
 
-            <button
-              onClick={onClose}
-              style={{
-                marginLeft: 'auto',
-                padding: '8px 14px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-1)',
-                background: 'var(--surface-low)',
-                color: 'var(--fg-2)',
-                fontSize: 13,
-                fontFamily: 'var(--font-sans)',
-                cursor: 'pointer',
-              }}
-            >
-              Close
-            </button>
+            {onToggleStar && (
+              <button
+                onClick={() => onToggleStar(term.id)}
+                aria-pressed={!!isStarred}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: `1px solid ${isStarred ? 'var(--accent, #D4A24C)' : 'var(--border-1)'}`,
+                  background: isStarred ? 'rgba(212,162,76,0.12)' : 'var(--surface-low)',
+                  color: isStarred ? 'var(--accent, #8a621f)' : 'var(--fg-2)',
+                  fontSize: 13,
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width={14}
+                  height={14}
+                  fill={isStarred ? 'var(--accent, #D4A24C)' : 'none'}
+                  stroke={isStarred ? 'var(--accent, #D4A24C)' : 'currentColor'}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                {isStarred ? 'Starred' : 'Star'}
+              </button>
+            )}
+
+            {!hideClose && (
+              <button
+                onClick={onClose}
+                style={{
+                  marginLeft: 'auto',
+                  padding: '8px 14px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-1)',
+                  background: 'var(--surface-low)',
+                  color: 'var(--fg-2)',
+                  fontSize: 13,
+                  fontFamily: 'var(--font-sans)',
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            )}
           </div>
         </div>
       </div>

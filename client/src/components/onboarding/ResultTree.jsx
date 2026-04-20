@@ -1,35 +1,22 @@
-import { useRef, useEffect } from 'react';
-import { drawTree } from '../tree/TreeRenderer';
+import TreeSVG from '../tree/TreeSVG';
 import { useTreeAnimation } from '../../hooks/useTreeAnimation';
+import { computeMood } from '../../utils/treeMood';
 
+// Survey-result visualization. The literacy survey produces a literacy
+// score but no bank-derived pillars, so we pass neutral mood values and
+// let the stage speak for itself.
 export default function ResultTree({ literacyScore, pillars }) {
-  const canvasRef = useRef(null);
-  const animTime  = useTreeAnimation();
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
-
-    ctx.clearRect(0, 0, W, H);
-    drawTree(ctx, {
-      x: W / 2,
-      groundY: H - 30,
-      score: literacyScore,
-      pillars: pillars ?? {},
-      animTime,
-      W,
-    });
-  }, [literacyScore, pillars, animTime]);
+  const animTime = useTreeAnimation();
+  const mood = computeMood(pillars ?? {}, {});
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={200}
-      height={200}
-      style={{ display: 'block', margin: '0 auto' }}
-    />
+    <div style={{ width: 220, height: 220, margin: '0 auto' }}>
+      <TreeSVG
+        healthScore={literacyScore}
+        mood={mood}
+        animTime={animTime}
+        label={`Survey result tree at literacy score ${Math.round(literacyScore)}.`}
+      />
+    </div>
   );
 }

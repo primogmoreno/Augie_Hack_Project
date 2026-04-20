@@ -2,14 +2,21 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import TopBar from '../components/layout/TopBar';
 import CategoryBar from '../components/dictionary/CategoryBar';
 import TermGrid from '../components/dictionary/TermGrid';
+import FilterBar from '../components/dictionary/FilterBar';
+import TermDetailPanel from '../components/dictionary/TermDetailPanel';
 import { TERMS } from '../data/dictionaryTerms';
 import { filterTerms, sortTerms } from '../utils/dictionaryFilters';
 import { useDictionaryProgress } from '../hooks/useDictionaryProgress';
+import { useDictionaryStarred } from '../hooks/useDictionaryStarred';
+import { useDictionaryShortcuts } from '../hooks/useDictionaryShortcuts';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { usePersonalContext } from '../hooks/usePersonalContext';
 import api from '../services/api';
 
 const SORT_OPTIONS = [
   { value: 'alpha',     label: 'A to Z' },
+  { value: 'starred',   label: 'Starred first' },
+  { value: 'recent',    label: 'Recently read' },
   { value: 'milestone', label: 'Milestones first' },
   { value: 'unread',    label: 'Unread first' },
   { value: 'personal',  label: 'Has my data' },
@@ -21,8 +28,11 @@ export default function Dictionary() {
   const [searchVal, setSearchVal]           = useState('');
   const [sortKey, setSortKey]               = useState('alpha');
   const [isConnected, setIsConnected]       = useState(null);
+  const [scrolled, setScrolled]             = useState(false);
   const searchRef = useRef(null);
-  const expandedRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  const isWide = useMediaQuery('(min-width: 1024px)');
 
   useEffect(() => {
     api.get('/plaid/accounts')
@@ -37,7 +47,8 @@ export default function Dictionary() {
       .catch(() => {});
   }
 
-  const { readTerms, markRead, isRead, progressForCategory } = useDictionaryProgress(handleMilestoneUnlock);
+  const { readTerms, readAt, markRead, isRead, progressForCategory } = useDictionaryProgress(handleMilestoneUnlock);
+  const { starred, toggleStar, isStarred } = useDictionaryStarred();
   const { contextData, loading: contextLoading } = usePersonalContext();
 
   const readCount  = readTerms.size;
@@ -46,29 +57,52 @@ export default function Dictionary() {
 
   const filteredAndSorted = useMemo(() => {
     const filtered = filterTerms(TERMS, { activeCat, searchVal });
-    return sortTerms(filtered, sortKey, readTerms);
-  }, [activeCat, searchVal, sortKey, readTerms]);
+    return sortTerms(filtered, sortKey, { readTerms, starred, readAt });
+  }, [activeCat, searchVal, sortKey, readTerms, starred, readAt]);
+
+  const expandedTerm = expandedTermId ? TERMS.find(t => t.id === expandedTermId) : null;
+  const inlineExpandedId = isWide ? null : expandedTermId;
 
   function handleToggleTerm(termId) {
     const next = termId === expandedTermId ? null : termId;
     setExpandedTermId(next);
     if (next && termId) markRead(termId);
-    if (next) {
-      setTimeout(() => expandedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    if (next && !isWide) {
+      setTimeout(() => {
+        const el = document.getElementById(`term-${termId}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
     }
   }
 
   function handleNavigateToTerm(termId) {
     setActiveCat('all');
     setSearchVal('');
-    if (searchRef.current) searchRef.current.value = '';
     setExpandedTermId(termId);
     markRead(termId);
-    setTimeout(() => {
-      const el = document.getElementById(`term-${termId}`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+    if (!isWide) {
+      setTimeout(() => {
+        const el = document.getElementById(`term-${termId}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
   }
+
+  useDictionaryShortcuts({
+    searchRef,
+    expandedTermId,
+    onCloseExpanded: () => setExpandedTermId(null),
+    onToggleTerm: handleToggleTerm,
+    onToggleStar: toggleStar,
+  });
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollTop > 8);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -77,10 +111,13 @@ export default function Dictionary() {
         subtitle="Browse and learn financial terms by category."
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)' }}>
+      <div
+        ref={scrollRef}
+        style={{ flex: 1, overflowY: 'auto', padding: '28px 40px 60px', background: 'var(--bg-page)' }}
+      >
 
         {/* Hero header */}
-        <div style={{ marginBottom: 36 }}>
+        <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'flex-end', gap: 32, marginBottom: 0 }}>
             <div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 56, color: 'var(--primary)', letterSpacing: '-0.02em', lineHeight: 1, margin: '0 0 12px' }}>
@@ -91,13 +128,13 @@ export default function Dictionary() {
               </p>
             </div>
 
-            {/* Progress stat */}
             <div style={{ textAlign: 'right', paddingBottom: 4 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, color: 'var(--primary)', lineHeight: 1, marginBottom: 4 }}>
                 {readPct}%
               </div>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-3)', marginBottom: 10 }}>
                 {readCount} of {totalCount} terms read
+                {starred.size > 0 && ` · ${starred.size} starred`}
               </div>
               <div style={{ width: 160, height: 4, background: 'var(--border-1)', borderRadius: 99, overflow: 'hidden', marginLeft: 'auto' }}>
                 <div style={{ height: '100%', width: `${readPct}%`, background: 'var(--success)', borderRadius: 99, transition: 'width 0.4s ease' }} />
@@ -105,88 +142,72 @@ export default function Dictionary() {
             </div>
           </div>
 
-          {/* Divider */}
           <div style={{ borderBottom: '1px solid var(--border-1)', marginTop: 28 }} />
         </div>
 
-        {/* Unified filter bar */}
+        {/* Sticky filter + category bar */}
         <div style={{
-          background: 'var(--surface-low)', borderRadius: 'var(--radius-xl)',
-          padding: 8, display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20,
+          position: 'sticky',
+          top: 0,
+          zIndex: 5,
+          background: 'var(--bg-page)',
+          paddingTop: 12,
+          paddingBottom: 12,
+          marginBottom: 16,
+          boxShadow: scrolled ? '0 6px 14px -12px rgba(0,0,0,0.25)' : 'none',
+          transition: 'box-shadow 0.2s ease',
         }}>
-          {/* Search */}
-          <div style={{ flex: 1, position: 'relative' }}>
-            <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="var(--fg-3)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
+          <div style={{ marginBottom: 12 }}>
+            <FilterBar
               ref={searchRef}
-              type="text"
-              aria-label="Search financial terms"
-              defaultValue={searchVal}
-              onChange={e => setSearchVal(e.target.value)}
-              placeholder="Search terms…"
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
-                border: 'none', borderRadius: 'var(--radius-md)',
-                fontSize: 13, fontFamily: 'var(--font-sans)',
-                color: 'var(--fg-1)', background: 'var(--surface-card)',
-                outline: 'none',
-              }}
+              searchVal={searchVal}
+              onSearchChange={setSearchVal}
+              sortKey={sortKey}
+              onSortChange={setSortKey}
+              sortOptions={SORT_OPTIONS}
+              resultsCount={filteredAndSorted.length}
             />
           </div>
 
-          {/* Sort */}
-          <select
-            aria-label="Sort terms"
-            value={sortKey}
-            onChange={e => setSortKey(e.target.value)}
-            style={{
-              flexShrink: 0, padding: '10px 14px',
-              border: 'none', borderRadius: 'var(--radius-md)',
-              fontSize: 13, fontFamily: 'var(--font-sans)',
-              color: 'var(--fg-1)', background: 'var(--surface-card)',
-              cursor: 'pointer', outline: 'none',
-            }}
-          >
-            {SORT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-
-          {/* Results count */}
-          <div style={{ paddingRight: 8, fontSize: 12, color: 'var(--fg-3)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            {filteredAndSorted.length} term{filteredAndSorted.length !== 1 ? 's' : ''}
-          </div>
+          <CategoryBar
+            activeCat={activeCat}
+            onCategorySelect={cat => { setActiveCat(cat); setExpandedTermId(null); }}
+            progressForCategory={progressForCategory}
+          />
         </div>
-
-        {/* Category pills */}
-        <CategoryBar
-          activeCat={activeCat}
-          onCategorySelect={cat => { setActiveCat(cat); setExpandedTermId(null); }}
-          progressForCategory={progressForCategory}
-        />
 
         <TermGrid
           terms={filteredAndSorted}
           activeCat={activeCat}
           searchVal={searchVal}
-          expandedTermId={expandedTermId}
+          expandedTermId={inlineExpandedId}
           onToggle={handleToggleTerm}
           isRead={isRead}
+          isStarred={isStarred}
+          onToggleStar={toggleStar}
           onMarkRead={markRead}
           onNavigateToTerm={handleNavigateToTerm}
           contextData={contextData}
           contextLoading={contextLoading}
           isConnected={isConnected}
-          onClearSearch={() => {
-            setSearchVal('');
-            if (searchRef.current) searchRef.current.value = '';
-          }}
+          onClearSearch={() => setSearchVal('')}
         />
       </div>
+
+      {isWide && (
+        <TermDetailPanel
+          term={expandedTerm}
+          isRead={expandedTerm ? isRead(expandedTerm.id) : false}
+          isStarred={expandedTerm ? isStarred(expandedTerm.id) : false}
+          onToggleStar={toggleStar}
+          onMarkRead={markRead}
+          onClose={() => setExpandedTermId(null)}
+          onNavigateToTerm={handleNavigateToTerm}
+          contextData={contextData}
+          contextLoading={contextLoading}
+          isConnected={isConnected}
+        />
+      )}
     </div>
   );
 }

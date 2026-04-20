@@ -11,14 +11,14 @@ export function filterTerms(terms, { activeCat, searchVal }) {
       t.name.toLowerCase().includes(q) ||
       t.preview.toLowerCase().includes(q) ||
       t.definition.toLowerCase().includes(q) ||
-      t.related.some(r => r.toLowerCase().includes(q))
+      (t.related || []).some(r => String(r).toLowerCase().includes(q)),
     );
   }
 
   return result;
 }
 
-export function sortTerms(terms, sortKey, readTerms) {
+export function sortTerms(terms, sortKey, { readTerms, starred, readAt } = {}) {
   const sorted = [...terms];
   switch (sortKey) {
     case 'alpha':
@@ -27,10 +27,24 @@ export function sortTerms(terms, sortKey, readTerms) {
       return sorted.sort((a, b) => (b.milestone ? 1 : 0) - (a.milestone ? 1 : 0));
     case 'unread':
       return sorted.sort((a, b) =>
-        (readTerms.has(a.id) ? 1 : 0) - (readTerms.has(b.id) ? 1 : 0));
+        (readTerms?.has(a.id) ? 1 : 0) - (readTerms?.has(b.id) ? 1 : 0));
     case 'personal':
       return sorted.sort((a, b) =>
         (b.hasPersonalData ? 1 : 0) - (a.hasPersonalData ? 1 : 0));
+    case 'starred':
+      return sorted.sort((a, b) => {
+        const sa = starred?.has(a.id) ? 1 : 0;
+        const sb = starred?.has(b.id) ? 1 : 0;
+        if (sa !== sb) return sb - sa;
+        return a.name.localeCompare(b.name);
+      });
+    case 'recent':
+      return sorted.sort((a, b) => {
+        const ta = readAt?.get(a.id) ?? 0;
+        const tb = readAt?.get(b.id) ?? 0;
+        if (ta === tb) return a.name.localeCompare(b.name);
+        return tb - ta;
+      });
     default:
       return sorted;
   }

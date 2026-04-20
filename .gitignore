@@ -11,3 +11,4 @@ server/.env
 venv
 *.pyc
 __pycache__/
+debug_accounts.json
